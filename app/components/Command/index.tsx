@@ -21,7 +21,7 @@ export default function Command({ text, className }: ICommandProps) {
 
   return (
     <div className={cn('flex items-center relative', styles.command, className)}>
-      <pre className="bg-gray-100 p-4 w-full">
+      <pre className="bg-gray-100 p-4 w-full overflow-x-auto">
         {text}
       </pre>
       <Button variant="outline" size="sm" className={styles.copyBtn} onClick={() => copyText()}>
