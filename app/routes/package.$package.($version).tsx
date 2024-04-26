@@ -39,7 +39,7 @@ export default function Package() {
   const loading = navigation.state === 'loading'
 
   return (
-    <section className="flex items-stretch gap-2 mb-8">
+    <main className="flex items-stretch gap-2 mb-8">
       <div className="w-full lg:w-[400px] flex-shrink-0 p-4">
         {loading
           ? (
@@ -111,6 +111,6 @@ export default function Package() {
           </TabsContent>
         </Tabs>
       </div>
-    </section>
+    </main>
   )
 }
