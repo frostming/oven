@@ -25,7 +25,7 @@ export function shouldRevalidate({ currentParams, nextParams, defaultShouldReval
 
 export async function loader({ params, request }: LoaderFunctionArgs) {
   invariant(params.package, 'No package name provided')
-  const pkg = await pypi.getPackage(params.package, params.version)
+  const pkg = await pypi.getPackage(params.package.trim().toLowerCase(), params.version)
   const activeTab = new URL(request.url).searchParams.get('tab')
   if (!pkg)
     throw new Response('Package not found', { status: 404 })
@@ -88,11 +88,15 @@ export default function Package() {
                         {explain(version)?.is_prerelease ? <Badge className="bg-yellow-300 text-yellow-700">PRE</Badge> : null}
                         {pkg.version === version ? <Badge className="bg-green-300 text-green-700">CURRENT</Badge> : null}
                       </div>
-                      <span className="text-sm text-slate-400">
-                        Published at
-                        {' '}
-                        <Time time={files.map(file => dayjs(file.upload_time)).sort((a, b) => a.diff(b))[0]} />
-                      </span>
+                      {files.length > 0
+                        ? (
+                          <span className="text-sm text-slate-400">
+                            Published at
+                            {' '}
+                            <Time time={files.map(file => dayjs(file.upload_time)).sort((a, b) => a.diff(b))[0]} />
+                          </span>
+                          )
+                        : null}
                     </h3>
                     <ul className="mt-2">
                       {files.map(file => (

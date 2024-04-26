@@ -22,11 +22,15 @@ export default function Metadata({ pkg, version }: { pkg: SerializeFrom<Package>
           </div>
         </CardTitle>
         <CardDescription>
-          <p>
-            Published at
-            {' '}
-            {pkg.published_time ? <Time time={pkg.published_time} /> : null }
-          </p>
+          {pkg.published_time
+            ? (
+              <p>
+                Published at
+                {' '}
+                <Time time={pkg.published_time} />
+              </p>
+              )
+            : null }
           <p className="text-lg mt-2">{pkg.summary}</p>
         </CardDescription>
       </CardHeader>
