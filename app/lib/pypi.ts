@@ -1,4 +1,10 @@
+import path from 'node:path'
+import os from 'node:os'
+import process from 'node:process'
+import fs from 'node:fs/promises'
+import { Buffer } from 'node:buffer'
 import addrparser from 'address-rfc2822'
+import { normalizePackageName } from './utils'
 
 interface Author {
   name?: string
@@ -54,9 +60,11 @@ function parseDependency(dep: string): Dependency | undefined {
 
 class PyPI {
   private url: string
+  private cachePath: string
 
   constructor(url: string) {
     this.url = url
+    this.cachePath = path.resolve(process.env.CACHE_PATH || path.resolve(os.homedir(), '.oven/cache'))
   }
 
   async getPackage(name: string, version?: string): Promise<Package | null> {
@@ -109,6 +117,45 @@ class PyPI {
       releases,
       files,
     }
+  }
+
+  private async getStoragePath(name: string, version: string, filename: string): Promise<string> {
+    const fileName = `${btoa(normalizePackageName(name))}.${btoa(filename)}`
+    try {
+      await fs.stat(this.cachePath)
+    }
+    catch {
+      await fs.mkdir(this.cachePath, { recursive: true })
+    }
+    const storagePath = path.join(this.cachePath, fileName)
+    return storagePath
+  }
+
+  async getPackageFile(name: string, version: string, filename: string): Promise<string> {
+    const storagePath = await this.getStoragePath(name, version, filename)
+    try {
+      await fs.stat(storagePath)
+      return storagePath
+    }
+    catch {
+      // ignore
+    }
+
+    const response = await fetch(`${this.url}/pypi/${normalizePackageName(name)}/${version}/json`)
+    if (!response.ok)
+      throw new Error(`Failed to fetch package file: ${response.statusText}`)
+
+    const data = await response.json()
+    const fileUrl = data.urls.find((file: FileResponse) => file.filename === filename)?.url
+    if (!fileUrl)
+      throw new Response('File not found', { status: 404 })
+    // fetch and save the file
+    const fileResponse = await fetch(fileUrl)
+    if (!fileResponse.ok)
+      throw new Error(`Failed to fetch package file: ${fileResponse.statusText}`)
+    const fileData = await fileResponse.arrayBuffer()
+    await fs.writeFile(storagePath, Buffer.from(fileData))
+    return storagePath
   }
 }
 

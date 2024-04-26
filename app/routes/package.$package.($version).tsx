@@ -17,6 +17,7 @@ import Tree from '~/assets/tree.svg?react'
 import FileTree from '~/components/FileTree'
 import Time from '~/components/Time'
 import { Badge } from '~/components/ui/badge'
+import { normalizePackageName } from '~/lib/utils'
 
 export function shouldRevalidate({ currentParams, nextParams, defaultShouldRevalidate }: ShouldRevalidateFunctionArgs) {
   if (currentParams.package === nextParams.package && currentParams.version === nextParams.version)
@@ -26,8 +27,9 @@ export function shouldRevalidate({ currentParams, nextParams, defaultShouldReval
 
 export async function loader({ params, request }: LoaderFunctionArgs) {
   invariant(params.package, 'No package name provided')
-  const pkg = await pypi.getPackage(params.package.trim().toLowerCase(), params.version)
-  const activeTab = new URL(request.url).searchParams.get('tab')
+  const pkg = await pypi.getPackage(normalizePackageName(params.package), params.version)
+  const url = new URL(request.url)
+  const activeTab = url.searchParams.get('tab')
   if (!pkg)
     throw new Response('Package not found', { status: 404 })
   return json({ package: pkg, version: params.version, activeTab })
@@ -37,7 +39,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
   if (!data)
     return []
 
-  const title = `${data.package.name}${` ${data.version}` || ''} - Oven`
+  const title = `${data.package.name}${data.version ? ` ${data.version}` : ''} - Oven`
   return [
     { name: 'description', content: data.package.summary },
     { title },
@@ -65,67 +67,75 @@ export default function Package() {
             )
           : <Metadata pkg={pkg} version={version} />}
       </div>
-      <div className="flex-grow p-4">
+      <div className="flex-grow p-4 min-w-0">
         <Tabs defaultValue={activeTab || 'description'} onValueChange={value => navigate({ search: `tab=${value}` }, { replace: true })}>
-          <TabsList className="w-full flex mt-4">
+          <TabsList className="w-full flex">
             <TabsTrigger value="description" className="flex-grow">
-              <Readme className="w-4" />
+              <Readme className="w-4 h-4" />
               {' '}
               Description
             </TabsTrigger>
             <TabsTrigger value="versions" className="flex-grow">
-              <Tags className="w-4" />
+              <Tags className="w-4 h-4" />
               {' '}
               {`${Object.keys(pkg.releases).length} Versions`}
             </TabsTrigger>
             <TabsTrigger value="files" className="flex-grow">
-              <Tree className="w-4" />
+              <Tree className="w-4 h-4" />
               {' '}
               Files
             </TabsTrigger>
           </TabsList>
           <TabsContent value="description">
-            <Card>
-              <div className="p-6 prose max-w-[90ch] mx-auto">
-                <Markdown>{pkg.description}</Markdown>
-              </div>
+            <Card className="p-2">
+              {loading
+                ? <Skeleton className="h-96" />
+                : (
+                  <div className="p-4 prose max-w-[90ch] mx-auto">
+                    <Markdown>{pkg.description}</Markdown>
+                  </div>
+                  )}
             </Card>
           </TabsContent>
           <TabsContent value="versions">
-            <Card>
-              <div>
-                {Object.entries(pkg.releases).filter(([a]) => explain(a) !== null).sort((a, b) => rcompare(a[0], b[0])).map(([version, files]) => (
-                  <div key={version} className="p-6 border-b border-gray-200">
-                    <h3 className="text-lg font-semibold flex justify-between items-center">
-                      <div className="flex items-center gap-2">
-                        <Link className="hover:underline transition duration-300" to={`/package/${pkg.name}/${version}`}>{version}</Link>
-                        {explain(version)?.is_prerelease ? <Badge className="bg-yellow-300 text-yellow-700">PRE</Badge> : null}
-                        {pkg.version === version ? <Badge className="bg-green-300 text-green-700">CURRENT</Badge> : null}
+            {loading
+              ? <Skeleton className="h-96" />
+              : (
+                <Card className="p-2">
+                  <div>
+                    {Object.entries(pkg.releases).filter(([a]) => explain(a) !== null).sort((a, b) => rcompare(a[0], b[0])).map(([version, files]) => (
+                      <div key={version} className="p-4 border-b border-gray-200">
+                        <h3 className="text-lg font-semibold flex justify-between items-center">
+                          <div className="flex items-center gap-2">
+                            <Link className="hover:underline transition duration-300" to={`/package/${pkg.name}/${version}`}>{version}</Link>
+                            {explain(version)?.is_prerelease ? <Badge className="bg-yellow-300 text-yellow-700">PRE</Badge> : null}
+                            {pkg.version === version ? <Badge className="bg-green-300 text-green-700">CURRENT</Badge> : null}
+                          </div>
+                          {files.length > 0
+                            ? (
+                              <span className="text-sm text-slate-400">
+                                Published at
+                                {' '}
+                                <Time time={files.map(file => dayjs(file.upload_time)).sort((a, b) => a.diff(b))[0]} />
+                              </span>
+                              )
+                            : null}
+                        </h3>
+                        <ul className="mt-2">
+                          {files.map(file => (
+                            <li key={file.filename}>
+                              <code>{file.filename}</code>
+                            </li>
+                          ))}
+                        </ul>
                       </div>
-                      {files.length > 0
-                        ? (
-                          <span className="text-sm text-slate-400">
-                            Published at
-                            {' '}
-                            <Time time={files.map(file => dayjs(file.upload_time)).sort((a, b) => a.diff(b))[0]} />
-                          </span>
-                          )
-                        : null}
-                    </h3>
-                    <ul className="mt-2">
-                      {files.map(file => (
-                        <li key={file.filename}>
-                          <code>{file.filename}</code>
-                        </li>
-                      ))}
-                    </ul>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </Card>
+                </Card>
+                )}
           </TabsContent>
           <TabsContent value="files">
-            <FileTree pkg={pkg} />
+            <Card className="p-2">{loading ? <Skeleton className="h-96" /> : <FileTree pkg={pkg} />}</Card>
           </TabsContent>
         </Tabs>
       </div>
