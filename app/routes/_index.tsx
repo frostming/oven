@@ -5,6 +5,7 @@ import { Input } from '~/components/ui/input'
 
 export const meta: MetaFunction = () => {
   return [
+    { title: 'Oven: Explore Python packages' },
     { name: 'description', content: 'A warehouse alternative to explore Python packages' },
   ]
 }

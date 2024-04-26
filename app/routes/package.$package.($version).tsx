@@ -1,4 +1,5 @@
-import { type LoaderFunctionArgs, json } from '@remix-run/node'
+import type { LoaderFunctionArgs, MetaFunction } from '@remix-run/node'
+import { json } from '@remix-run/node'
 import type { ShouldRevalidateFunctionArgs } from '@remix-run/react'
 import { Link, useLoaderData, useNavigate, useNavigation } from '@remix-run/react'
 import invariant from 'tiny-invariant'
@@ -30,6 +31,19 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
   if (!pkg)
     throw new Response('Package not found', { status: 404 })
   return json({ package: pkg, version: params.version, activeTab })
+}
+
+export const meta: MetaFunction<typeof loader> = ({ data }) => {
+  if (!data)
+    return []
+
+  const title = `${data.package.name}${` ${data.version}` || ''} - Oven`
+  return [
+    { name: 'description', content: data.package.summary },
+    { title },
+    { property: 'og:title', content: title },
+    { property: 'og:description', content: data.package.summary },
+  ]
 }
 
 export default function Package() {
@@ -80,7 +94,7 @@ export default function Package() {
           <TabsContent value="versions">
             <Card>
               <div>
-                {Object.entries(pkg.releases).sort((a, b) => rcompare(a[0], b[0])).map(([version, files]) => (
+                {Object.entries(pkg.releases).filter(([a]) => explain(a) !== null).sort((a, b) => rcompare(a[0], b[0])).map(([version, files]) => (
                   <div key={version} className="p-6 border-b border-gray-200">
                     <h3 className="text-lg font-semibold flex justify-between items-center">
                       <div className="flex items-center gap-2">
