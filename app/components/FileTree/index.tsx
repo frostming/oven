@@ -4,6 +4,8 @@ import type { Package } from '~/lib/pypi'
 
 export default function FileTree({ pkg }: { pkg: SerializeFrom<Package> }) {
   return (
-    <Card><p>File Tree</p></Card>
+    <Card>
+      <p className="p-6">Coming Soon</p>
+    </Card>
   )
 }

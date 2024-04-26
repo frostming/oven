@@ -2,7 +2,7 @@ import { type LoaderFunctionArgs, json } from '@remix-run/node'
 import type { ShouldRevalidateFunctionArgs } from '@remix-run/react'
 import { Link, useLoaderData, useNavigate, useNavigation } from '@remix-run/react'
 import invariant from 'tiny-invariant'
-import { compare } from '@renovatebot/pep440'
+import { explain, rcompare } from '@renovatebot/pep440'
 import dayjs from 'dayjs'
 import { Card } from '~/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs'
@@ -15,6 +15,7 @@ import Tags from '~/assets/tags.svg?react'
 import Tree from '~/assets/tree.svg?react'
 import FileTree from '~/components/FileTree'
 import Time from '~/components/Time'
+import { Badge } from '~/components/ui/badge'
 
 export function shouldRevalidate({ currentParams, nextParams, defaultShouldRevalidate }: ShouldRevalidateFunctionArgs) {
   if (currentParams.package === nextParams.package && currentParams.version === nextParams.version)
@@ -79,10 +80,14 @@ export default function Package() {
           <TabsContent value="versions">
             <Card>
               <div>
-                {Object.entries(pkg.releases).sort((a, b) => compare(b[0], a[0])).map(([version, files]) => (
+                {Object.entries(pkg.releases).sort((a, b) => rcompare(a[0], b[0])).map(([version, files]) => (
                   <div key={version} className="p-6 border-b border-gray-200">
                     <h3 className="text-lg font-semibold flex justify-between items-center">
-                      <Link className="hover:underline transition duration-300" to={`/package/${pkg.name}/${version}`}>{version}</Link>
+                      <div className="flex items-center gap-2">
+                        <Link className="hover:underline transition duration-300" to={`/package/${pkg.name}/${version}`}>{version}</Link>
+                        {explain(version)?.is_prerelease ? <Badge className="bg-yellow-300 text-yellow-700">PRE</Badge> : null}
+                        {pkg.version === version ? <Badge className="bg-green-300 text-green-700">CURRENT</Badge> : null}
+                      </div>
                       <span className="text-sm text-slate-400">
                         Published at
                         {' '}
