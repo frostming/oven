@@ -1,0 +1,10 @@
+button.copyBtn {
+  position: absolute;
+  right: 10px;
+  transition: all 0.3s;
+  display: none;
+}
+
+.command:hover button.copyBtn {
+  display: inline-block;
+}
