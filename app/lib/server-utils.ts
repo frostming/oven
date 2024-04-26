@@ -4,7 +4,7 @@ import * as zlib from 'node:zlib'
 import type { Buffer } from 'node:buffer'
 import jszip from 'jszip'
 import tar from 'tar-stream'
-import * as bz2 from 'unbzip2-stream'
+import bz2 from 'unbzip2-stream'
 import * as bl from 'bl'
 
 export interface FileTreeNode {

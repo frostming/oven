@@ -28,8 +28,12 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const buffer = await getArchiveFile(storageFile, path)
   let errorReason = ''
   let code = ''
-  if (buffer.length > maxReadSize) { errorReason = 'File is too large to display.' }
-  else if (await isBinaryFile(buffer)) { errorReason = 'It looks like a binary file.' }
+  if (buffer.length > maxReadSize) {
+    errorReason = 'File is too large to display.'
+  }
+  else if (await isBinaryFile(buffer)) {
+    errorReason = 'It looks like a binary file.'
+  }
   else {
     code = highlighter.codeToHtml(buffer.toString('utf8'), {
       lang: guessLanguage(path) || 'plaintext',
