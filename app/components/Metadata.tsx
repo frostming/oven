@@ -25,7 +25,7 @@ export default function Metadata({ pkg, version }: { pkg: SerializeFrom<Package>
           <p>
             Published at
             {' '}
-            <Time time={pkg.published_time} />
+            {pkg.published_time ? <Time time={pkg.published_time} /> : null }
           </p>
           <p className="text-lg mt-2">{pkg.summary}</p>
         </CardDescription>

@@ -6,9 +6,9 @@ interface Author {
 }
 
 interface File {
-  upload_time: Date
   filename: string
   yanked: boolean
+  upload_time?: Date
 }
 
 interface FileResponse {
@@ -20,7 +20,7 @@ interface FileResponse {
 export interface Package {
   name: string
   version: string
-  published_time: Date
+  published_time?: Date
   project_urls: Record<string, string>
   authors: Author[]
   package_url: string
@@ -92,7 +92,7 @@ class PyPI {
       yanked: file.yanked,
     }))
     // @ts-expect-error - TS doesn't know that Date is a valid value for Math#min
-    const published_time = Math.min(...files.map(file => file.upload_time)) as Date
+    const published_time = files.length > 0 ? Math.min(...files.map(file => file.upload_time)) as Date : undefined
 
     return {
       name: info.name,

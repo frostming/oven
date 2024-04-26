@@ -39,8 +39,8 @@ export default function Package() {
   const loading = navigation.state === 'loading'
 
   return (
-    <main className="flex items-stretch gap-2 mb-8">
-      <div className="w-full lg:w-[400px] flex-shrink-0 p-4">
+    <main className="lg:flex items-stretch gap-2 mb-8">
+      <div className="lg:w-[400px] flex-shrink-0 p-4">
         {loading
           ? (
             <div className="flex flex-col space-y-4">
@@ -51,7 +51,7 @@ export default function Package() {
             )
           : <Metadata pkg={pkg} version={version} />}
       </div>
-      <div className="flex-grow pr-4">
+      <div className="flex-grow p-4">
         <Tabs defaultValue={activeTab || 'description'} onValueChange={value => navigate({ search: `tab=${value}` }, { replace: true })}>
           <TabsList className="w-full flex mt-4">
             <TabsTrigger value="description" className="flex-grow">
