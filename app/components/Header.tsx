@@ -14,7 +14,7 @@ export default function Header({ showSearch = true }: IHeaderProps) {
     <header className="px-6 py-4 flex gap-4 flex-row justify-between items-center shadow shadow-gray-200">
       <Link to="/" className="flex flex-row gap-4 items-center">
         <img src={Logo} alt="Plaza logo" className="w-12 h-12" />
-        <h1 className="text-4xl">Plaza</h1>
+        <h1 className="text-4xl">Oven</h1>
       </Link>
       <div className="flex flex-row gap-4 items-center">
         {showSearch && (
