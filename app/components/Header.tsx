@@ -13,7 +13,7 @@ export default function Header({ showSearch = true }: IHeaderProps) {
   return (
     <header className="px-6 py-4 flex gap-4 flex-row justify-between items-center shadow shadow-gray-200">
       <Link to="/" className="flex flex-row gap-4 items-center">
-        <img src={Logo} alt="Plaza logo" className="w-12 h-12" />
+        <img src={Logo} alt="Oven logo" className="w-12 h-12" />
         <h1 className="text-4xl">Oven</h1>
       </Link>
       <div className="flex flex-row gap-4 items-center">
@@ -28,7 +28,7 @@ export default function Header({ showSearch = true }: IHeaderProps) {
             <Input type="search" name="package" placeholder="Search packages" className="p-2 rounded-lg border border-primay-300" />
           </Form>
         )}
-        <a href="https://github.com/frostming/plaza.git">
+        <a href="https://github.com/frostming/oven.git">
           <GitHub />
         </a>
       </div>
