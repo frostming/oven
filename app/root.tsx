@@ -29,6 +29,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <body className="min-h-screen flex flex-col">
         {children}
         <ScrollRestoration />
+        <script async src="https://umami.fming.dev/script.js" data-website-id="f79f811b-6ac7-43db-a732-20977797685b"></script>
         <Scripts />
       </body>
     </html>
