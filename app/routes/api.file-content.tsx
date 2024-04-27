@@ -6,11 +6,6 @@ import { getHighlighter } from 'shiki'
 import pypi from '~/lib/pypi'
 import { getArchiveFile, guessLanguage } from '~/lib/server-utils'
 
-const highlighter = await getHighlighter({
-  themes: ['github-light'],
-  langs: ['javascript', 'python', 'rust', 'typescript', 'json', 'yaml', 'shell', 'bash', 'html', 'css', 'toml', 'markdown', 'xml'],
-})
-
 const maxReadSize = 2 ** 20 // 1MB
 
 export async function loader({ request }: LoaderFunctionArgs) {
@@ -24,6 +19,13 @@ export async function loader({ request }: LoaderFunctionArgs) {
   invariant(filename, 'No filename provided')
   invariant(path, 'No path provided')
 
+  const language = guessLanguage(path) || 'plaintext'
+
+  const highlighter = await getHighlighter({
+    themes: ['github-light'],
+    langs: [language],
+  })
+
   const storageFile = await pypi.getPackageFile(name, version, filename)
   const buffer = await getArchiveFile(storageFile, path)
   let errorReason = ''
@@ -36,7 +38,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   }
   else {
     code = highlighter.codeToHtml(buffer.toString('utf8'), {
-      lang: guessLanguage(path) || 'plaintext',
+      lang: language,
       theme: 'github-light',
     })
   }
