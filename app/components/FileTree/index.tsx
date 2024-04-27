@@ -58,7 +58,7 @@ export default function FileTree({ pkg }: IFileBrowserProps) {
                     ? (
                         codeFetcher.data.errorReason
                           ? <pre className="w-full">{codeFetcher.data.errorReason}</pre>
-                          : <pre className="overflow-auto max-h-[800px] w-full" dangerouslySetInnerHTML={{ __html: codeFetcher.data.code }} />)
+                          : <pre className="overflow-auto max-h-[800px] w-full text-sm" dangerouslySetInnerHTML={{ __html: codeFetcher.data.code }} />)
                     : null}
                 </div>
               </div>
