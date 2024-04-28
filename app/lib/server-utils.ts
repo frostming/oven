@@ -152,7 +152,7 @@ function getFileStream(filePath: string) {
 async function listZipFiles(filePath: string): Promise<string[]> {
   const data = await fs.readFile(filePath)
   const zip = await jszip.loadAsync(data)
-  const filenames = Object.keys(zip.files)
+  const filenames = Object.keys(zip.files).filter(f => !zip.files[f].dir)
   return filenames
 }
 
