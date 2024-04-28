@@ -5,6 +5,7 @@ import Command from './Command'
 import { Badge } from './ui/badge'
 import Time from './Time'
 import ExternalLink from './ExternalLink'
+import LinkIcon from './LinkIcon'
 import type { Package } from '~/lib/pypi'
 import Email from '~/assets/email.svg?react'
 
@@ -59,7 +60,11 @@ export default function Metadata({ pkg, version }: { pkg: SerializeFrom<Package>
                 <ul>
                   {Object.entries(pkg.project_urls).map(([name, url], index) => (
                     <li key={index}>
-                      <ExternalLink href={url}>{name}</ExternalLink>
+                      <ExternalLink href={url}>
+                        <LinkIcon name={name} className="w-4 h-4 mb-0.5" />
+                        {' '}
+                        {name}
+                      </ExternalLink>
                     </li>
                   ))}
                 </ul>
