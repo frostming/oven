@@ -25,6 +25,7 @@ interface FileResponse {
 
 export interface Package {
   name: string
+  normalized_name: string
   version: string
   published_time?: Date
   project_urls: Record<string, string>
@@ -104,6 +105,7 @@ class PyPI {
 
     return {
       name: info.name,
+      normalized_name: normalizePackageName(info.name),
       version: info.version,
       project_urls: info.project_urls,
       published_time,

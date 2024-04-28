@@ -37,7 +37,7 @@ export default function Metadata({ pkg, version }: { pkg: SerializeFrom<Package>
       </CardHeader>
       <CardContent>
         <div className="flex flex-col gap-2 divide-y">
-          <Command text={`pip install ${pkg.name}${version ? `==${version}` : ''}`} />
+          <Command name={pkg.normalized_name} version={version} />
           <div>
             <h3 className="text-lg font-thin my-2">Authors</h3>
             {pkg.authors.map((author, index) => (
