@@ -55,7 +55,7 @@ export default function Command({ name, version, className }: ICommandProps) {
           <Button className={cn('absolute top-2 right-1 py-1 px-2', styles.copyBtn)} onClick={() => copyText(text)} variant="outline">
             <SvgIcon name={isCopied ? 'check' : 'copy'} className="w-4 h-4" />
           </Button>
-          <pre className="pr-2 pl-3 py-4">{text}</pre>
+          <pre className="pr-2 pl-3 py-4 overflow-x-auto">{text}</pre>
         </TabsContent>
       ))}
     </Tabs>
