@@ -1,11 +1,13 @@
 import type { SerializeFrom } from '@remix-run/node'
 import { useFetcher } from '@remix-run/react'
-import React, { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import { Skeleton } from '../ui/skeleton'
 import { TreeView } from '../ui/tree-view'
+import styles from './file-tree.module.css'
 import type { Package } from '~/lib/pypi'
 import type { FileTreeNode } from '~/lib/server-utils'
+import { cn } from '~/lib/utils'
 
 interface IFileBrowserProps {
   pkg: SerializeFrom<Package>
@@ -47,20 +49,24 @@ export default function FileTree({ pkg }: IFileBrowserProps) {
           ? <Skeleton className="h-96" />
           : fetcher.data
             ? (
-              <div className="lg:flex items-stretch mt-4">
+              <div className="lg:flex items-stretch mt-4 max-h-[800px]">
                 <TreeView
                   elements={fetcher.data.files || []}
-                  className="max-w-[200px] overflow-x-auto min-h-64 flex-shrink-0"
+                  className="max-w-[200px] overflow-auto min-h-64 flex-shrink-0"
                   onSelect={id => fetchCode(id as string)}
                 />
-                <div className="rounding border border-slate-300 p-2 flex-grow overflow-auto">
-                  { codeFetcher.state === 'idle' && codeFetcher.data
-                    ? (
-                        codeFetcher.data.errorReason
-                          ? <pre className="w-full">{codeFetcher.data.errorReason}</pre>
-                          : <pre className="overflow-auto max-h-[800px] w-full text-sm" dangerouslySetInnerHTML={{ __html: codeFetcher.data.code }} />)
-                    : null}
-                </div>
+                { codeFetcher.state === 'idle' && codeFetcher.data
+                  ? (
+                    <div
+                      className={cn('rounding border border-slate-300 p-2 flex-grow overflow-auto text-sm', styles.code)}
+                      {...(!codeFetcher.data.errorReason ? { dangerouslySetInnerHTML: { __html: codeFetcher.data.code } } : {})}
+                    >
+                      {codeFetcher.data.errorReason
+                        ? <pre className="w-full">{codeFetcher.data.errorReason}</pre>
+                        : null}
+                    </div>
+                    )
+                  : null}
               </div>
               )
             : null}
