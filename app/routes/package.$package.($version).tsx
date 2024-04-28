@@ -11,13 +11,11 @@ import pypi from '~/lib/pypi'
 import Markdown from '~/components/Markdown'
 import { Skeleton } from '~/components/ui/skeleton'
 import Metadata from '~/components/Metadata'
-import Readme from '~/assets/readme.svg?react'
-import Tags from '~/assets/tags.svg?react'
-import Tree from '~/assets/tree.svg?react'
 import FileTree from '~/components/FileTree'
 import Time from '~/components/Time'
 import { Badge } from '~/components/ui/badge'
 import { normalizePackageName } from '~/lib/utils'
+import SvgIcon from '~/components/SvgIcon'
 
 export function shouldRevalidate({ currentParams, nextParams, defaultShouldRevalidate }: ShouldRevalidateFunctionArgs) {
   if (currentParams.package === nextParams.package && currentParams.version === nextParams.version)
@@ -67,22 +65,19 @@ export default function Package() {
             )
           : <Metadata pkg={pkg} version={version} />}
       </div>
-      <div className="flex-grow p-4 min-w-0">
+      <div className="flex-grow lg:p-4 min-w-0">
         <Tabs defaultValue={activeTab || 'description'} onValueChange={value => navigate({ search: `tab=${value}` }, { replace: true })}>
           <TabsList className="w-full flex">
             <TabsTrigger value="description" className="flex-grow">
-              <Readme className="w-4 h-4" />
-              {' '}
+              <SvgIcon name="readme" className="w-4 h-4 mr-1" />
               Description
             </TabsTrigger>
             <TabsTrigger value="versions" className="flex-grow">
-              <Tags className="w-4 h-4" />
-              {' '}
+              <SvgIcon name="tags" className="w-4 h-4 mr-1" />
               {`${Object.keys(pkg.releases).length} Versions`}
             </TabsTrigger>
             <TabsTrigger value="files" className="flex-grow">
-              <Tree className="w-4 h-4" />
-              {' '}
+              <SvgIcon name="tree" className="w-4 h-4 ml-1" />
               Files
             </TabsTrigger>
           </TabsList>

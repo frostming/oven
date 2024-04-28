@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 
-import ExternalIcon from '~/assets/external.svg?react'
+import SvgIcon from './SvgIcon'
 import { cn } from '~/lib/utils'
 
 interface IExternalLinkProps {
@@ -13,7 +13,7 @@ export default function ExternalLink({ href, className, children }: IExternalLin
   return (
     <a href={href} target="_blank" className={cn('hover:underline transition-all duration-200', className)}>
       {children}
-      <ExternalIcon className="ml-1 inline-block w-4 h-4" />
+      <SvgIcon name="external" className="ml-1 w-4 h-4" />
     </a>
   )
 }

@@ -5,9 +5,9 @@ import Command from './Command'
 import { Badge } from './ui/badge'
 import Time from './Time'
 import ExternalLink from './ExternalLink'
-import LinkIcon from './LinkIcon'
+import SvgIcon from './SvgIcon'
 import type { Package } from '~/lib/pypi'
-import Email from '~/assets/email.svg?react'
+import { getIcon } from '~/lib/utils'
 
 export default function Metadata({ pkg, version }: { pkg: SerializeFrom<Package>, version?: string }) {
   return (
@@ -46,7 +46,7 @@ export default function Metadata({ pkg, version }: { pkg: SerializeFrom<Package>
                   ? (
                     <a href={`mailto:${author.email}`} target="blank" className="hover:underline flex items-center space-x-1">
                       <span>{author.name || author.email}</span>
-                      <Email className="w-4" />
+                      <SvgIcon name="email" className="w-4" />
                     </a>
                     )
                   : <span>{author.name || 'Unknown'}</span>}
@@ -61,7 +61,7 @@ export default function Metadata({ pkg, version }: { pkg: SerializeFrom<Package>
                   {Object.entries(pkg.project_urls).map(([name, url], index) => (
                     <li key={index}>
                       <ExternalLink href={url}>
-                        <LinkIcon name={name} className="w-4 h-4 mb-0.5" />
+                        <SvgIcon name={getIcon(name)} className="w-4 h-4 mb-0.5" />
                         {' '}
                         {name}
                       </ExternalLink>

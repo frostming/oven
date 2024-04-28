@@ -21,14 +21,7 @@ const iconMap = {
 }
 
 export function getIcon(name: string) {
-  const icons = import.meta.glob(
-    '../assets/*.svg',
-    { query: '?react' },
-  ) as {
-    [key: string]: () => Promise<{ default: React.ComponentType<React.SVGProps<SVGSVGElement>> }>
-  }
-  const iconName = (Object.keys(iconMap) as (keyof typeof iconMap)[]).find(
+  return (Object.keys(iconMap) as (keyof typeof iconMap)[]).find(
     key => iconMap[key].some(keyword => name.trim().toLowerCase().includes(keyword)),
   ) || 'web'
-  return React.lazy(icons[`../assets/${iconName}.svg`])
 }

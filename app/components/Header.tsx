@@ -1,7 +1,7 @@
 import { Form, Link, useNavigate } from '@remix-run/react'
 import { Input } from './ui/input'
+import SvgIcon from './SvgIcon'
 import Logo from '~/assets/logo.svg'
-import GitHub from '~/assets/github.svg?react'
 
 interface IHeaderProps {
   showSearch?: boolean
@@ -29,7 +29,7 @@ export default function Header({ showSearch = true }: IHeaderProps) {
           </Form>
         )}
         <a href="https://github.com/frostming/oven.git">
-          <GitHub />
+          <SvgIcon name="github" />
         </a>
       </div>
     </header>

@@ -1,9 +1,8 @@
 import { useCallback, useState } from 'react'
 import { Button } from '../ui/button'
+import SvgIcon from '../SvgIcon'
 import styles from './command.module.css'
 import { cn } from '~/lib/utils'
-import Copy from '~/assets/copy.svg?react'
-import Check from '~/assets/check.svg?react'
 
 interface ICommandProps {
   text: string
@@ -25,7 +24,7 @@ export default function Command({ text, className }: ICommandProps) {
         {text}
       </pre>
       <Button variant="outline" size="sm" className={styles.copyBtn} onClick={() => copyText()}>
-        {isCopied ? <Check className="w-4" /> : <Copy className="w-4" />}
+        <SvgIcon name={isCopied ? 'check' : 'copy'} className="w-4 h-4" />
       </Button>
     </div>
   )
