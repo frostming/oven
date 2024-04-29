@@ -77,7 +77,7 @@ export default function Package() {
               {`${Object.keys(pkg.releases).length} Versions`}
             </TabsTrigger>
             <TabsTrigger value="files" className="flex-grow">
-              <SvgIcon name="tree" className="w-4 h-4 ml-1" />
+              <SvgIcon name="tree" className="w-4 h-4 mr-1" />
               Files
             </TabsTrigger>
           </TabsList>
@@ -109,7 +109,7 @@ export default function Package() {
                           {files.length > 0
                             ? (
                               <span className="text-sm text-slate-400">
-                                Published at
+                                Published
                                 {' '}
                                 <Time time={files.map(file => dayjs(file.upload_time)).sort((a, b) => a.diff(b))[0]} />
                               </span>
