@@ -26,7 +26,7 @@ export default function Metadata({ pkg, version }: { pkg: SerializeFrom<Package>
           {pkg.published_time
             ? (
               <p>
-                Published at
+                Published
                 {' '}
                 <Time time={pkg.published_time} />
               </p>
