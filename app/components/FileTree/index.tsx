@@ -49,16 +49,16 @@ export default function FileTree({ pkg }: IFileBrowserProps) {
           ? <Skeleton className="h-96" />
           : fetcher.data
             ? (
-              <div className="lg:flex items-stretch mt-4 max-h-[800px]">
+              <div className="lg:flex items-stretch mt-4 lg:max-h-[800px]">
                 <TreeView
                   elements={fetcher.data.files || []}
-                  className="max-w-[200px] overflow-auto min-h-64 flex-shrink-0"
+                  className="max-w-[200px] overflow-auto min-h-64 flex-shrink-0 max-h-[800px] lg:max-h-none"
                   onSelect={id => fetchCode(id as string)}
                 />
                 { codeFetcher.state === 'idle' && codeFetcher.data
                   ? (
                     <div
-                      className={cn('rounding border border-slate-300 p-2 flex-grow overflow-auto text-sm', styles.code)}
+                      className={cn('rounding border border-slate-300 p-2 flex-grow overflow-auto text-sm max-h-[800px] lg:max-h-none', styles.code)}
                       {...(!codeFetcher.data.errorReason ? { dangerouslySetInnerHTML: { __html: codeFetcher.data.code } } : {})}
                     >
                       {codeFetcher.data.errorReason
