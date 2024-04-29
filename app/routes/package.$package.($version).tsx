@@ -77,7 +77,7 @@ export default function Package() {
               {`${Object.keys(pkg.releases).length} Versions`}
             </TabsTrigger>
             <TabsTrigger value="files" className="flex-grow">
-              <SvgIcon name="tree" className="w-4 h-4 ml-1" />
+              <SvgIcon name="tree" className="w-4 h-4 mr-1" />
               Files
             </TabsTrigger>
           </TabsList>
