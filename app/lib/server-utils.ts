@@ -162,7 +162,8 @@ async function listTarFiles(filePath: string): Promise<string[]> {
     const extract = tar.extract()
 
     extract.on('entry', (header, stream, next) => {
-      fileNames.push(header.name)
+      if (!header.name.endsWith('/'))
+        fileNames.push(header.name)
       stream.resume() // Consume the stream
       next()
     })
