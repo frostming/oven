@@ -4,6 +4,7 @@ import process from 'node:process'
 import fs from 'node:fs/promises'
 import { Buffer } from 'node:buffer'
 import addrparser from 'address-rfc2822'
+import { JSDOM } from 'jsdom'
 import { normalizePackageName } from './utils'
 
 interface Author {
@@ -23,17 +24,20 @@ interface FileResponse {
   yanked: boolean
 }
 
-export interface Package {
+export interface SearchResult {
   name: string
-  normalized_name: string
   version: string
+  summary: string
+}
+
+export interface Package extends SearchResult {
+  normalized_name: string
   published_time?: Date
   project_urls: Record<string, string>
   authors: Author[]
   package_url: string
   dependencies: Dependency[]
   requires_python?: string
-  summary: string
   description: string
   yanked: boolean
   files: File[]
@@ -60,6 +64,7 @@ function parseDependency(dep: string): Dependency | undefined {
 }
 
 class PyPI {
+  static readonly MAX_SEARCH_RESULTS = process.env.MAX_SEARCH_RESULTS ? Number.parseInt(process.env.MAX_SEARCH_RESULTS) : 10
   private url: string
   private cachePath: string
 
@@ -158,6 +163,26 @@ class PyPI {
     const fileData = await fileResponse.arrayBuffer()
     await fs.writeFile(storagePath, Buffer.from(fileData))
     return storagePath
+  }
+
+  async search(query: string): Promise<SearchResult[]> {
+    const url = `${this.url}/search?q=${encodeURIComponent(query)}`
+    const response = await fetch(url)
+
+    if (!response.ok)
+      throw new Error(`Failed to fetch search results: ${response.statusText}`)
+    // parse the HTML response
+    const text = await response.text()
+    const dom = new JSDOM(text)
+    const results = [...dom.window.document.querySelectorAll('.package-snippet')].map((element: Element) => {
+      const name = element.querySelector('.package-snippet__name')?.textContent || ''
+      const version = element.querySelector('.package-snippet__version')?.textContent || ''
+      const summary = element.querySelector('.package-snippet__description')?.textContent || ''
+      if (!name || !version || !summary)
+        return null
+      return { name, version, summary }
+    }).filter((result): result is SearchResult => result !== null).slice(0, PyPI.MAX_SEARCH_RESULTS)
+    return results
   }
 }
 

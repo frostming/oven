@@ -1,5 +1,4 @@
 import { type ClassValue, clsx } from 'clsx'
-import React from 'react'
 import { twMerge } from 'tailwind-merge'
 
 export function cn(...inputs: ClassValue[]) {
@@ -24,4 +23,9 @@ export function getIcon(name: string) {
   return (Object.keys(iconMap) as (keyof typeof iconMap)[]).find(
     key => iconMap[key].some(keyword => name.trim().toLowerCase().includes(keyword)),
   ) || 'web'
+}
+
+export function getPlatform(): string {
+  // @ts-expect-error Future API
+  return (navigator.userAgentData?.platform ?? navigator.platform) || 'unknown'
 }
