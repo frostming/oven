@@ -43,7 +43,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
     { title },
     { property: 'og:title', content: title },
     { property: 'og:description', content: data.package.summary },
-    { property: 'og:image', content: getOgUrl(title, { description: data.package.summary, extra: data.version })
+    { property: 'og:image', content: getOgUrl(title, { description: data.package.summary, extra: data.version }) },
   ]
 }
 
