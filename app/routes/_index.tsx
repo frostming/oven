@@ -15,6 +15,10 @@ export const meta: MetaFunction = () => {
     { property: 'og:title', content: 'Oven: Explore Python packages' },
     { property: 'og:description', content: 'A warehouse alternative to explore Python packages' },
     { property: 'og:image', content: getOgUrl('Oven', { description: 'Explore Python packages' }) },
+    { property: 'twitter:card', content: 'summary_large_image' },
+    { property: 'twitter:title', content: 'Oven: Explore Python packages' },
+    { property: 'twitter:description', content: 'A warehouse alternative to explore Python packages' },
+    { property: 'twitter:image', content: getOgUrl('Oven', { description: 'Explore Python packages' }) },
   ]
 }
 

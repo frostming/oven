@@ -44,6 +44,10 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
     { property: 'og:title', content: title },
     { property: 'og:description', content: data.package.summary },
     { property: 'og:image', content: getOgUrl(data.package.name, { description: data.package.summary, extra: data.version }) },
+    { property: 'twitter:card', content: 'summary_large_image' },
+    { property: 'twitter:title', content: title },
+    { property: 'twitter:description', content: data.package.summary },
+    { property: 'twitter:image', content: getOgUrl(data.package.name, { description: data.package.summary, extra: data.version }) },
   ]
 }
 
