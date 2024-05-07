@@ -31,7 +31,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
           }}
         />
         <div style={{ display: 'flex', width: '100%', padding: '2rem 4rem', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', flexShrink: 1 }}>
             <div style={{ display: 'flex', gap: '1rem' }}>
               <h1 style={{ fontSize: '6rem', fontWeight: 'bold' }}>{title}</h1>
               {extra && (<span style={{ fontSize: '4rem' }}>{extra}</span>)}
