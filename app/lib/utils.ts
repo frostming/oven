@@ -1,3 +1,4 @@
+import process from 'node:process'
 import { type ClassValue, clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 
@@ -28,4 +29,15 @@ export function getIcon(name: string) {
 export function getPlatform(): string {
   // @ts-expect-error Future API
   return (navigator.userAgentData?.platform ?? navigator.platform) || 'unknown'
+}
+
+export function getOgUrl(title: string, options: { extra?: string, description?: string } = {}) {
+  const origin = 'https://pyoven.org'
+  const url = new URL('/api/og', origin)
+  url.searchParams.set('title', title)
+  if (options.extra)
+    url.searchParams.set('extra', options.extra)
+  if (options.description)
+    url.searchParams.set('description', options.description)
+  return url.href
 }

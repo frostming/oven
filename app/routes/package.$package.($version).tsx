@@ -14,7 +14,7 @@ import Metadata from '~/components/Metadata'
 import FileTree from '~/components/FileTree'
 import Time from '~/components/Time'
 import { Badge } from '~/components/ui/badge'
-import { normalizePackageName } from '~/lib/utils'
+import { getOgUrl, normalizePackageName } from '~/lib/utils'
 import SvgIcon from '~/components/SvgIcon'
 
 export function shouldRevalidate({ currentParams, nextParams, defaultShouldRevalidate }: ShouldRevalidateFunctionArgs) {
@@ -43,6 +43,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
     { title },
     { property: 'og:title', content: title },
     { property: 'og:description', content: data.package.summary },
+    { property: 'og:image', content: getOgUrl(title, { description: data.package.summary, extra: data.version })
   ]
 }
 

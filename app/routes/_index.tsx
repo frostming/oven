@@ -6,11 +6,15 @@ import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
 import { useDebounceFetcher } from '~/lib/debounce'
 import PackageList from '~/components/PackageList'
+import { getOgUrl } from '~/lib/utils'
 
 export const meta: MetaFunction = () => {
   return [
     { title: 'Oven: Explore Python packages' },
     { name: 'description', content: 'A warehouse alternative to explore Python packages' },
+    { property: 'og:title', content: 'Oven: Explore Python packages' },
+    { property: 'og:description', content: 'A warehouse alternative to explore Python packages' },
+    { property: 'og:image', content: getOgUrl('Oven', { description: 'Explore Python packages' }) },
   ]
 }
 
