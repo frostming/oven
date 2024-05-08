@@ -23,8 +23,18 @@ export default function Header() {
 
     const handleKeyDown = (event: KeyboardEvent) => {
       const mutated = isAppleDevice ? event.metaKey : event.ctrlKey
-      if (mutated && event.key === 'k' && !searchDialogOpen)
-        setSearchDialogOpen(true)
+      if (mutated && event.key === 'k') {
+        if (
+          (event.target instanceof HTMLElement && event.target.isContentEditable)
+          || event.target instanceof HTMLInputElement
+          || event.target instanceof HTMLTextAreaElement
+          || event.target instanceof HTMLSelectElement
+        )
+          return
+
+        event.preventDefault()
+        setSearchDialogOpen(open => !open)
+      }
     }
 
     document.addEventListener('keydown', handleKeyDown)
