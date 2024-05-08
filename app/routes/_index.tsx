@@ -1,6 +1,7 @@
 import type { MetaFunction } from '@remix-run/node'
 import { useNavigate } from '@remix-run/react'
 import { useRef } from 'react'
+import { Search } from 'lucide-react'
 import type { loader as searchLoader } from './api.search'
 import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
@@ -30,9 +31,10 @@ export default function Index() {
   const searchResults = inputRef.current?.value.trim() ? fetcher.data?.results ?? [] : []
 
   return (
-    <main className="bg-cover bg-center bg-slate-300 flex-1 flex items-center justify-center flex-col gap-4 bg-[url('/img/home-bg.jpg')]">
+    <main className="bg-cover bg-center flex-1 flex items-center justify-center flex-col gap-4 relative">
+      <div className="w-full h-full absolute inset-0 bg-[url('/img/home-bg.jpg')] object-cover dark:invert -z-10" />
       <h1 className="text-8xl font-bold alig">Oven</h1>
-      <h2 className="text-4xl mb-2">
+      <h2 className="text-4xl mb-2 px-2 text-center">
         ... to
         {' '}
         <del>bake pies</del>
@@ -53,7 +55,10 @@ export default function Index() {
         }}
       >
         <Input ref={inputRef} name="q" placeholder="Search for a package" className="text-2xl py-8 max-w-sm" />
-        <Button type="submit" className="text-2xl py-8">Browse Package</Button>
+        <Button type="submit" className="text-2xl py-8 flex-shrink-0">
+          <Search className="lg:hidden" />
+          <span className="sr-only lg:not-sr-only">Browse Package</span>
+        </Button>
         {searchResults.length > 0
           ? (
             <PackageList

@@ -69,7 +69,7 @@ export default function PackageList({ loading, packages, className, onSelectChan
                   if (event.key === 'Enter')
                     onEnter?.(pkg)
                 }}
-                className="p-2 hover:bg-slate-100 border-b border-muted focus:bg-muted focus:border-2 focus:border-primary"
+                className="p-2 hover:bg-secondary border-b border-muted focus:bg-muted focus:border-2 focus:border-primary"
               >
                 <div className="flex items-center justify-between">
                   <h3 className="font-semibold">{pkg.name}</h3>

@@ -91,7 +91,7 @@ export default function Package() {
               {loading
                 ? <Skeleton className="h-96" />
                 : (
-                  <div className="p-4 prose max-w-none mx-auto">
+                  <div className="p-4 prose dark:prose-invert max-w-none mx-auto">
                     <Markdown>{pkg.description}</Markdown>
                   </div>
                   )}

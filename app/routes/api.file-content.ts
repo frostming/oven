@@ -5,6 +5,7 @@ import { isBinaryFile } from 'isbinaryfile'
 import { getHighlighter } from 'shiki'
 import pypi from '~/lib/pypi'
 import { getArchiveFile, guessLanguage } from '~/lib/server-utils'
+import { themeSessionResolver } from '~/lib/theme'
 
 const maxReadSize = 2 ** 20 // 1MB
 
@@ -22,7 +23,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const language = guessLanguage(path) || 'plaintext'
 
   const highlighter = await getHighlighter({
-    themes: ['github-light'],
+    themes: ['github-light', 'github-dark'],
     langs: [language],
   })
 
@@ -39,7 +40,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
   else {
     code = highlighter.codeToHtml(buffer.toString('utf8'), {
       lang: language,
-      theme: 'github-light',
+      themes: {
+        light: 'github-light',
+        dark: 'github-dark',
+      },
     })
   }
 

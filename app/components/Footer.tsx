@@ -2,7 +2,7 @@ import ExternalLink from './ExternalLink'
 
 export default function Footer() {
   return (
-    <footer className="flex items-stretch py-8 bg-primary text-primary-foreground divide-x">
+    <footer className="flex items-stretch py-8 bg-slate-900 text-slate-50 divide-x divide-slate-200">
       <div className="flex justify-center flex-1">
         <p>
           © 2024

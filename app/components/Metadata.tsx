@@ -82,7 +82,7 @@ export default function Metadata({ pkg, version }: { pkg: SerializeFrom<Package>
                 <li key={index}>
                   <Link to={`/package/${dep.name.toLowerCase()}`} className="hover:underline">
                     <span className="font-semibold text-primary">{dep.name}</span>
-                    {dep.extra ? <code className="text-slate-500 bg-slate-100 text-sm px-1 border-r-2">{dep.extra}</code> : null }
+                    {dep.extra ? <code className="text-sm px-1 border-r-2 text-secondary-foreground bg-secondary">{dep.extra}</code> : null }
                   </Link>
                 </li>
               ))}

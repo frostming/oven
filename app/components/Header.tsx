@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogFooter, DialogTrigger } from './ui/dialog'
 import { Button } from './ui/button'
 import PackageList from './PackageList'
 import Key from './Key'
+import ThemeToggle from './ThemeToggle'
 import Logo from '~/assets/logo.svg'
 import { getPlatform } from '~/lib/utils'
 import type { loader as searchLoader } from '~/routes/api.search'
@@ -18,10 +19,10 @@ export default function Header() {
   const [searchDialogOpen, setSearchDialogOpen] = useState(false)
 
   useEffect(() => {
-    const isMac = getPlatform().toLowerCase().includes('mac')
+    const isAppleDevice = /(Mac|iPhone|iPod|iPad)/i.test(getPlatform())
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      const mutated = isMac ? event.metaKey : event.ctrlKey
+      const mutated = isAppleDevice ? event.metaKey : event.ctrlKey
       if (mutated && event.key === 'k' && !searchDialogOpen)
         setSearchDialogOpen(true)
     }
@@ -61,6 +62,7 @@ export default function Header() {
                 if (!ref.current?.value.trim())
                   return
                 navigate(`/package/${ref.current.value}`)
+                setSearchDialogOpen(false)
               }}
             >
               <Input type="search" name="q" placeholder="Search packages..." ref={ref} />
@@ -95,6 +97,7 @@ export default function Header() {
         <a href="https://github.com/frostming/oven.git">
           <SvgIcon name="github" />
         </a>
+        <ThemeToggle />
       </div>
     </header>
   )
