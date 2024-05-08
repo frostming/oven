@@ -2,7 +2,7 @@ import { Link } from '@remix-run/react'
 import { useEffect, useRef, useState } from 'react'
 import SvgIcon from './SvgIcon'
 import { Skeleton } from './ui/skeleton'
-import type { SearchResult } from '~/lib/pypi'
+import type { SearchResult } from '~/lib/pypi.server'
 
 interface IPackageListProps {
   loading?: boolean

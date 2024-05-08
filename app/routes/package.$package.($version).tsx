@@ -1,5 +1,5 @@
 import type { LoaderFunctionArgs, MetaFunction } from '@remix-run/node'
-import { json } from '@remix-run/node'
+import { json, redirect } from '@remix-run/node'
 import type { ShouldRevalidateFunctionArgs } from '@remix-run/react'
 import { Link, useLoaderData, useNavigate, useNavigation } from '@remix-run/react'
 import invariant from 'tiny-invariant'
@@ -7,7 +7,7 @@ import { explain, rcompare } from '@renovatebot/pep440'
 import dayjs from 'dayjs'
 import { Card } from '~/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs'
-import pypi from '~/lib/pypi'
+import pypi from '~/lib/pypi.server'
 import Markdown from '~/components/Markdown'
 import { Skeleton } from '~/components/ui/skeleton'
 import Metadata from '~/components/Metadata'
@@ -25,9 +25,14 @@ export function shouldRevalidate({ currentParams, nextParams, defaultShouldReval
 
 export async function loader({ params, request }: LoaderFunctionArgs) {
   invariant(params.package, 'No package name provided')
-  const pkg = await pypi.getPackage(normalizePackageName(params.package), params.version)
+  const normalizedName = normalizePackageName(params.package)
   const url = new URL(request.url)
+  if (params.package !== normalizedName) {
+    url.pathname = `/package/${normalizedName}/${params.version ? `${params.version}` : ''}`
+    return redirect(`${url.pathname}${url.search}`, { status: 302 })
+  }
   const activeTab = url.searchParams.get('tab')
+  const pkg = await pypi.getPackage(normalizedName, params.version)
   if (!pkg)
     throw new Response('Package not found', { status: 404 })
   return json({ package: pkg, version: params.version, activeTab })

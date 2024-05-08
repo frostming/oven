@@ -1,8 +1,8 @@
 import type { LoaderFunctionArgs } from '@remix-run/node'
 import { json } from '@remix-run/node'
 import invariant from 'tiny-invariant'
-import pypi from '~/lib/pypi'
-import { listArchiveFiles } from '~/lib/server-utils'
+import pypi from '~/lib/pypi.server'
+import { listArchiveFiles } from '~/lib/utils.server'
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url)

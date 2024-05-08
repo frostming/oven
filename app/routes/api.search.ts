@@ -1,5 +1,5 @@
 import { type LoaderFunctionArgs, json } from '@remix-run/node'
-import pypi from '~/lib/pypi'
+import pypi from '~/lib/pypi.server'
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const q = new URL(request.url).searchParams.get('q')

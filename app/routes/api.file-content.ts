@@ -3,9 +3,9 @@ import { json } from '@remix-run/node'
 import invariant from 'tiny-invariant'
 import { isBinaryFile } from 'isbinaryfile'
 import { getHighlighter } from 'shiki'
-import pypi from '~/lib/pypi'
-import { getArchiveFile, guessLanguage } from '~/lib/server-utils'
-import { themeSessionResolver } from '~/lib/theme'
+import pypi from '~/lib/pypi.server'
+import { getArchiveFile, guessLanguage } from '~/lib/utils.server'
+import { themeSessionResolver } from '~/lib/theme.server'
 
 const maxReadSize = 2 ** 20 // 1MB
 

@@ -14,7 +14,7 @@ import clsx from 'clsx'
 import globalStyles from './globals.css?url'
 import Header from './components/Header'
 import Footer from './components/Footer'
-import { themeSessionResolver } from './lib/theme'
+import { themeSessionResolver } from './lib/theme.server'
 
 export const links: LinksFunction = () => [
   { rel: 'stylesheet', href: globalStyles },

@@ -6,7 +6,7 @@ import { Badge } from './ui/badge'
 import Time from './Time'
 import ExternalLink from './ExternalLink'
 import SvgIcon from './SvgIcon'
-import type { Package } from '~/lib/pypi'
+import type { Package } from '~/lib/pypi.server'
 import { getIcon } from '~/lib/utils'
 
 export default function Metadata({ pkg, version }: { pkg: SerializeFrom<Package>, version?: string }) {

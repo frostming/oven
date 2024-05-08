@@ -5,8 +5,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Skeleton } from '../ui/skeleton'
 import { TreeView } from '../ui/tree-view'
 import styles from './file-tree.module.css'
-import type { Package } from '~/lib/pypi'
-import type { FileTreeNode } from '~/lib/server-utils'
+import type { Package } from '~/lib/pypi.server'
+import type { FileTreeNode } from '~/lib/utils.server'
 import { cn } from '~/lib/utils'
 
 interface IFileBrowserProps {
