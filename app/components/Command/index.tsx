@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@radix-ui/react-tabs'
+import { useLocalStorage } from 'react-use'
 import { Button } from '../ui/button'
 import SvgIcon from '../SvgIcon'
 import styles from './command.module.css'
@@ -15,7 +16,7 @@ type PackageManager = 'pip' | 'pdm' | 'rye' | 'poetry'
 
 export default function Command({ name, version, className }: ICommandProps) {
   const [isCopied, setIsCopied] = useState(false)
-  const [packageManager, setPackageManager] = useState<PackageManager>('pip')
+  const [packageManager, setPackageManager] = useLocalStorage<PackageManager>('OVEN_PACKAGE_MANAGER', 'pip')
 
   const text = useMemo(() => {
     const nameVersion = version ? `${name}==${version}` : name
