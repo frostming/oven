@@ -12,10 +12,10 @@ function numberWithCommas(x: number) {
 }
 
 export default function DownloadChart({ data }: IDownloadChartProps) {
-  const average = numberWithCommas(data.length ? data.reduce((acc, curr) => acc + curr.downloads, 0) / data.length : 0)
+  const latest = numberWithCommas(data.length ? data[data.length - 1].downloads : 0)
   return (
     <div className="h-32 relative">
-      <p className="absolute left-0 top-0">{average}</p>
+      <p className="absolute left-0 top-0">{latest}</p>
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={data}>
           <XAxis dataKey="week_start_date" hide />
