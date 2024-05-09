@@ -43,7 +43,7 @@ export interface Package extends SearchResult {
   yanked: boolean
   files: File[]
   releases: Record<string, File[]>
-  downloadStats: { week_start_date: string, downloads: number }[]
+  downloadStats?: { week_start_date: string, downloads: number }[]
 }
 
 interface Dependency {

@@ -1,10 +1,10 @@
 import { useCallback, useMemo, useState } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@radix-ui/react-tabs'
-import { useLocalStorage } from 'react-use'
 import { Button } from '../ui/button'
 import SvgIcon from '../SvgIcon'
 import styles from './command.module.css'
 import { cn } from '~/lib/utils'
+import useLocalStorage from '~/lib/local-storage'
 
 interface ICommandProps {
   name: string
@@ -18,7 +18,7 @@ export default function Command({ name, version, className }: ICommandProps) {
   const [isCopied, setIsCopied] = useState(false)
   const [packageManager, setPackageManager] = useLocalStorage<PackageManager>('OVEN_PACKAGE_MANAGER', 'pip')
 
-  const text = useMemo(() => {
+  const cmd = useMemo(() => {
     const nameVersion = version ? `${name}==${version}` : name
     switch (packageManager) {
       case 'pip':
@@ -32,11 +32,13 @@ export default function Command({ name, version, className }: ICommandProps) {
     }
   }, [name, version, packageManager])
 
-  const copyText = useCallback(async (text: string) => {
-    await navigator.clipboard.writeText(text)
+  const copyText = useCallback(async () => {
+    if (!cmd)
+      return
+    await navigator.clipboard.writeText(cmd)
     setIsCopied(true)
     setTimeout(() => setIsCopied(false), 1000)
-  }, [text, setIsCopied])
+  }, [cmd, setIsCopied])
 
   return (
     <Tabs defaultValue={packageManager} onValueChange={value => setPackageManager(value as PackageManager)} className={cn('rounded bg-muted', className)}>
@@ -53,10 +55,10 @@ export default function Command({ name, version, className }: ICommandProps) {
       </TabsList>
       {['pip', 'pdm', 'rye', 'poetry'].map(manager => (
         <TabsContent key={manager} value={manager} className={cn('relative', styles.command)}>
-          <Button className={cn('absolute top-2 right-1 py-1 px-2', styles.copyBtn)} onClick={() => copyText(text)} variant="outline">
+          <Button className={cn('absolute top-2 right-1 py-1 px-2', styles.copyBtn)} onClick={copyText} variant="outline">
             <SvgIcon name={isCopied ? 'check' : 'copy'} className="w-4 h-4" />
           </Button>
-          <pre className="pr-2 pl-3 py-4 overflow-x-auto">{text}</pre>
+          <pre className="pr-2 pl-3 py-4 overflow-x-auto">{cmd}</pre>
         </TabsContent>
       ))}
     </Tabs>

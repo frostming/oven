@@ -5,13 +5,19 @@ import { BigQuery } from '@google-cloud/bigquery'
 import type { JSONClient } from 'google-auth-library/build/src/auth/googleauth'
 
 export class BigQueryClient {
-  private auth: GoogleAuth
+  private auth?: GoogleAuth
 
   constructor() {
     this.auth = this.getGoogleAuth()
   }
 
+  isEnabled() {
+    return !!this.auth
+  }
+
   private getGoogleAuth() {
+    if (!process.env.GOOGLE_CREDENTIALS)
+      return undefined
     const credentials = Buffer.from(process.env.GOOGLE_CREDENTIALS as string, 'base64').toString('utf-8')
     const decodedCredentials = JSON.parse(credentials)
     return new GoogleAuth({
@@ -21,6 +27,8 @@ export class BigQueryClient {
   }
 
   async queryPackageDownloadStats(packageName: string) {
+    if (!this.auth)
+      return undefined
     const client = new BigQuery({ authClient: await this.auth.getClient() as JSONClient })
     const query = `SELECT
       date_trunc(date(timestamp), week) AS week_start_date,

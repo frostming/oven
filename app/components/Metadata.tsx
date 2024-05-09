@@ -41,7 +41,20 @@ export default function Metadata({ pkg, version }: { pkg: SerializeFrom<Package>
           <Command name={pkg.normalized_name} version={version} />
           <div>
             <h3 className="text-lg font-thin my-2">Weekly Downloads</h3>
-            <DownloadChart data={pkg.downloadStats} />
+            {pkg.downloadStats
+              ? (
+                <DownloadChart data={pkg.downloadStats} />
+                )
+              : (
+                <div className="py-8 text-center text-sm text-muted-foreground">
+                  <p>Download stats are not available</p>
+                  <p>
+                    Please set up
+                    {' '}
+                    <code>GOOGLE_CREDENTIALS</code>
+                  </p>
+                </div>
+                )}
           </div>
           <div>
             <h3 className="text-lg font-thin my-2">Authors</h3>
