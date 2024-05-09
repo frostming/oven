@@ -6,6 +6,7 @@ import { Badge } from './ui/badge'
 import Time from './Time'
 import ExternalLink from './ExternalLink'
 import SvgIcon from './SvgIcon'
+import DownloadChart from './DownloadChart'
 import type { Package } from '~/lib/pypi.server'
 import { getIcon } from '~/lib/utils'
 
@@ -38,6 +39,10 @@ export default function Metadata({ pkg, version }: { pkg: SerializeFrom<Package>
       <CardContent>
         <div className="flex flex-col gap-2 divide-y">
           <Command name={pkg.normalized_name} version={version} />
+          <div>
+            <h3 className="text-lg font-thin my-2">Weekly Downloads</h3>
+            <DownloadChart data={pkg.downloadStats} />
+          </div>
           <div>
             <h3 className="text-lg font-thin my-2">Authors</h3>
             {pkg.authors.map((author, index) => (
