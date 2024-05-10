@@ -1,5 +1,5 @@
 import type { SubmitOptions } from '@remix-run/react'
-import { useFetcher } from '@remix-run/react'
+import { useFetcher, useNavigation } from '@remix-run/react'
 import { useEffect, useRef } from 'react'
 
 type SubmitTarget =
@@ -23,6 +23,7 @@ type Required<Type, Key extends keyof Type> = Type & {
 }
 
 export function useDebounceFetcher<T>() {
+  const navigation = useNavigation()
   const timeoutRef = useRef<NodeJS.Timeout>()
   useEffect(() => {
     // no initialize step required since timeoutRef defaults undefined
@@ -31,6 +32,12 @@ export function useDebounceFetcher<T>() {
         clearTimeout(timeoutRef.current)
     }
   }, [timeoutRef])
+
+  useEffect(() => {
+    if (navigation.state === 'loading' && timeoutRef.current)
+      clearTimeout(timeoutRef.current)
+  }, [navigation.state])
+
   const fetcher = useFetcher<T>() as ReturnType<typeof useFetcher<T>> & {
     debounceSubmit?: DebounceSubmitFunction
   }

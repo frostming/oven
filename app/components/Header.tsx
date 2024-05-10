@@ -1,4 +1,4 @@
-import { Link, useNavigate } from '@remix-run/react'
+import { Link, useNavigate, useNavigation } from '@remix-run/react'
 import { useEffect, useRef, useState } from 'react'
 import { Input } from './ui/input'
 import SvgIcon from './SvgIcon'
@@ -14,6 +14,7 @@ import { useDebounceFetcher } from '~/lib/debounce'
 
 export default function Header() {
   const navigate = useNavigate()
+  const navigation = useNavigation()
   const ref = useRef<HTMLInputElement>(null)
   const fetcher = useDebounceFetcher<typeof searchLoader>()
   const [searchDialogOpen, setSearchDialogOpen] = useState(false)
@@ -40,6 +41,11 @@ export default function Header() {
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [])
+
+  useEffect(() => {
+    if (navigation.state === 'loading' && searchDialogOpen)
+      setSearchDialogOpen(false)
+  }, [navigation.state, searchDialogOpen])
 
   const listData = ref.current?.value.trim() ? fetcher.data?.results ?? [] : []
 
