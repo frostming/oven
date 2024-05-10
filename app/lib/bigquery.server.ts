@@ -30,15 +30,24 @@ export class BigQueryClient {
     if (!this.auth)
       return undefined
     const client = new BigQuery({ authClient: await this.auth.getClient() as JSONClient })
-    const query = `SELECT
-      date_trunc(date(timestamp), week) AS week_start_date,
-      COUNT(*) AS downloads
-    FROM \`bigquery-public-data.pypi.file_downloads\`
-    WHERE
-      date(timestamp) >= date_sub(current_date(), INTERVAL 1 year)
-      and project = @package
-    GROUP BY \`week_start_date\`
-    ORDER BY \`week_start_date\` ASC
+    const query = `WITH date_series AS (
+      SELECT
+        day AS period_start
+      FROM
+        UNNEST(GENERATE_DATE_ARRAY(DATE_SUB(CURRENT_DATE(), INTERVAL 364 DAY), DATE_SUB(CURRENT_DATE(), interval 7 day), INTERVAL 7 DAY)) AS day
+    )
+    SELECT
+      ds.period_start as week_start_date,
+      COUNT(dl.timestamp) AS downloads
+    FROM
+      date_series ds
+      LEFT JOIN \`bigquery-public-data.pypi.file_downloads\` dl
+      ON date(dl.timestamp) >= ds.period_start
+      AND date(dl.timestamp) < DATE_ADD(ds.period_start, INTERVAL 7 DAY)
+    where dl.project = @package
+    GROUP BY
+      ds.period_start
+    ORDER BY ds.period_start;
     `
 
     const [rows] = await client.query({
