@@ -40,6 +40,7 @@ export interface Package extends SearchResult {
   dependencies: Dependency[]
   requires_python?: string
   description: string
+  description_content_type: 'text/markdown' | 'text/x-rst' | 'text/plain'
   yanked: boolean
   files: File[]
   releases: Record<string, File[]>
@@ -127,6 +128,7 @@ class PyPI {
       requires_python: info.requires_python,
       summary: info.summary,
       description: info.description,
+      description_content_type: info.description_content_type || 'text/x-rst',
       yanked: info.yanked || false,
       releases,
       files,

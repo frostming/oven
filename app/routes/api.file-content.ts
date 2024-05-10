@@ -5,7 +5,6 @@ import { isBinaryFile } from 'isbinaryfile'
 import { getHighlighter } from 'shiki'
 import pypi from '~/lib/pypi.server'
 import { getArchiveFile, guessLanguage } from '~/lib/utils.server'
-import { themeSessionResolver } from '~/lib/theme.server'
 
 const maxReadSize = 2 ** 20 // 1MB
 

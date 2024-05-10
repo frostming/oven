@@ -8,7 +8,7 @@ import dayjs from 'dayjs'
 import { Card } from '~/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs'
 import pypi from '~/lib/pypi.server'
-import Markdown from '~/components/Markdown'
+import Readme from '~/components/Readme'
 import { Skeleton } from '~/components/ui/skeleton'
 import Metadata from '~/components/Metadata'
 import FileTree from '~/components/FileTree'
@@ -96,9 +96,7 @@ export default function Package() {
               {loading
                 ? <Skeleton className="h-96" />
                 : (
-                  <div className="p-4 prose dark:prose-invert max-w-none mx-auto">
-                    <Markdown>{pkg.description}</Markdown>
-                  </div>
+                  <Readme contentType={pkg.description_content_type}>{pkg.description}</Readme>
                   )}
             </Card>
           </TabsContent>

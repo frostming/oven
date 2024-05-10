@@ -8,4 +8,7 @@ installGlobals()
 
 export default defineConfig({
   plugins: [remix(), tsconfigPaths(), svgr()],
+  optimizeDeps: {
+    exclude: ['pyodide'],
+  },
 })
