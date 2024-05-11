@@ -1,5 +1,6 @@
-import { Link } from '@remix-run/react'
+import { Link, useFetcher } from '@remix-run/react'
 import type { SerializeFrom } from '@remix-run/node'
+import { useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card'
 import Command from './Command'
 import { Badge } from './ui/badge'
@@ -7,10 +8,21 @@ import Time from './Time'
 import ExternalLink from './ExternalLink'
 import SvgIcon from './SvgIcon'
 import DownloadChart from './DownloadChart'
+import { Skeleton } from './ui/skeleton'
 import type { Package } from '~/lib/pypi.server'
 import { getIcon } from '~/lib/utils'
 
-export default function Metadata({ pkg, version }: { pkg: SerializeFrom<Package>, version?: string }) {
+interface IMetadataProps {
+  pkg: SerializeFrom<Package>
+  version?: string
+  stats: {
+    rows?: { week_start_date: string, downloads: number }[]
+    error?: Error
+    loading: boolean
+  }
+}
+
+export default function Metadata({ pkg, version, stats }: IMetadataProps) {
   return (
     <Card>
       <CardHeader>
@@ -41,20 +53,21 @@ export default function Metadata({ pkg, version }: { pkg: SerializeFrom<Package>
           <Command name={pkg.normalized_name} version={version} />
           <div>
             <h3 className="text-lg font-thin my-2">Weekly Downloads</h3>
-            {pkg.downloadStats
+            {stats.loading
               ? (
-                <DownloadChart data={pkg.downloadStats} />
+                <Skeleton className="h-32 flex justify-center items-center">
+                  <SvgIcon name="spinner" />
+                </Skeleton>
                 )
-              : (
-                <div className="py-8 text-center text-sm text-muted-foreground">
-                  <p>Download stats are not available</p>
-                  <p>
-                    Please set up
-                    {' '}
-                    <code>GOOGLE_CREDENTIALS</code>
-                  </p>
-                </div>
-                )}
+              : stats.error
+                ? (
+                  <pre className="py-8 text-center text-sm text-muted-foreground text-balance">
+                    {stats.error.message}
+                  </pre>
+                  )
+                : (
+                  <DownloadChart data={stats.rows ?? []} />
+                  )}
           </div>
           <div>
             <h3 className="text-lg font-thin my-2">Authors</h3>

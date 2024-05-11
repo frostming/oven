@@ -22,13 +22,13 @@ export class BigQueryClient {
     const decodedCredentials = JSON.parse(credentials)
     return new GoogleAuth({
       credentials: decodedCredentials,
-      scopes: ['https://www.googleapis.com/auth/bigquery.readonly'],
+      scopes: ['https://www.googleapis.com/auth/bigquery'],
     })
   }
 
-  async queryPackageDownloadStats(packageName: string) {
+  async queryPackageDownloadStats(packageName: string): Promise<[{ week_start_date: string, downloads: number }[], Error | undefined]> {
     if (!this.auth)
-      return undefined
+      return [[], new Error('Download stats are not available')]
     const client = new BigQuery({ authClient: await this.auth.getClient() as JSONClient })
     const query = `WITH date_series AS (
       SELECT
@@ -49,17 +49,22 @@ export class BigQueryClient {
       ds.period_start
     ORDER BY ds.period_start;
     `
-
-    const [rows] = await client.query({
-      query,
-      location: 'US',
-      params: { package: packageName },
-    })
-    return rows.map(
-      (row: { week_start_date: { value: string }, downloads: number }) => ({
-        week_start_date: row.week_start_date.value,
-        downloads: row.downloads,
-      }),
-    )
+    try {
+      const [rows] = await client.query({
+        query,
+        location: 'US',
+        params: { package: packageName },
+        jobTimeoutMs: 5000,
+      })
+      return [rows.map(
+        (row: { week_start_date: { value: string }, downloads: number }) => ({
+          week_start_date: row.week_start_date.value,
+          downloads: row.downloads,
+        }),
+      ), undefined]
+    }
+    catch (error) {
+      return [[], error as Error]
+    }
   }
 }

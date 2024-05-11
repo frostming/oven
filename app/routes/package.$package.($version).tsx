@@ -1,10 +1,12 @@
 import type { LoaderFunctionArgs, MetaFunction } from '@remix-run/node'
 import { json, redirect } from '@remix-run/node'
 import type { ShouldRevalidateFunctionArgs } from '@remix-run/react'
-import { Link, useLoaderData, useNavigate, useNavigation } from '@remix-run/react'
+import { Link, useFetcher, useLoaderData, useNavigate, useNavigation } from '@remix-run/react'
 import invariant from 'tiny-invariant'
 import { explain, rcompare } from '@renovatebot/pep440'
 import dayjs from 'dayjs'
+import { useEffect, useMemo } from 'react'
+import type { PackageDownloadStatsLoader } from './api.downloads.$package'
 import { Card } from '~/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs'
 import pypi from '~/lib/pypi.server'
@@ -62,6 +64,23 @@ export default function Package() {
   const navigate = useNavigate()
   const loading = navigation.state === 'loading'
 
+  const downloadFetcher = useFetcher<PackageDownloadStatsLoader>({ key: `downloadStats:${pkg.normalized_name}` })
+
+  useEffect(() => {
+    downloadFetcher.submit(
+      { package: pkg.normalized_name },
+      { action: `/api/downloads/${pkg.normalized_name}` },
+    )
+  }, [pkg.normalized_name])
+
+  const stats = useMemo(() => {
+    return {
+      rows: downloadFetcher.data?.rows,
+      error: downloadFetcher.data?.error,
+      loading: downloadFetcher.state === 'loading',
+    }
+  }, [downloadFetcher.data, downloadFetcher.state])
+
   return (
     <main className="lg:flex items-stretch gap-2 mb-8">
       <div className="lg:w-[400px] flex-shrink-0 p-4">
@@ -73,7 +92,7 @@ export default function Package() {
               <Skeleton className="h-4" />
             </div>
             )
-          : <Metadata pkg={pkg} version={version} />}
+          : <Metadata pkg={pkg} version={version} stats={stats} />}
       </div>
       <div className="flex-grow lg:p-4 min-w-0">
         <Tabs defaultValue={activeTab || 'description'} onValueChange={value => navigate({ search: `tab=${value}` }, { replace: true })}>

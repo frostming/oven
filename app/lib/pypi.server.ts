@@ -44,7 +44,6 @@ export interface Package extends SearchResult {
   yanked: boolean
   files: File[]
   releases: Record<string, File[]>
-  downloadStats?: { week_start_date: string, downloads: number }[]
 }
 
 interface Dependency {
@@ -70,19 +69,14 @@ class PyPI {
   static readonly MAX_SEARCH_RESULTS = process.env.MAX_SEARCH_RESULTS ? Number.parseInt(process.env.MAX_SEARCH_RESULTS) : 10
   private url: string
   private cachePath: string
-  private bigquery: BigQueryClient
 
   constructor(url: string) {
     this.url = url
     this.cachePath = path.resolve(process.env.CACHE_PATH || path.resolve(os.homedir(), '.oven/cache'))
-    this.bigquery = new BigQueryClient()
   }
 
   async getPackage(name: string, version?: string): Promise<Package | null> {
-    const [response, stats] = await Promise.all([
-      fetch(`${this.url}/pypi/${name}${version ? `/${version}` : ''}/json`),
-      this.bigquery.queryPackageDownloadStats(name),
-    ])
+    const response = await fetch(`${this.url}/pypi/${name}${version ? `/${version}` : ''}/json`)
     if (!response.ok) {
       if (response.status === 404)
         return null
@@ -132,7 +126,6 @@ class PyPI {
       yanked: info.yanked || false,
       releases,
       files,
-      downloadStats: stats,
     }
   }
 
