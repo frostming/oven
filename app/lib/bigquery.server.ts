@@ -30,24 +30,19 @@ export class BigQueryClient {
     if (!this.auth)
       return [[], new Error('Download stats are not available')]
     const client = new BigQuery({ authClient: await this.auth.getClient() as JSONClient })
-    const query = `WITH date_series AS (
-      SELECT
-        day AS period_start
-      FROM
-        UNNEST(GENERATE_DATE_ARRAY(DATE_SUB(CURRENT_DATE(), INTERVAL 364 DAY), DATE_SUB(CURRENT_DATE(), interval 7 day), INTERVAL 7 DAY)) AS day
-    )
-    SELECT
-      ds.period_start as week_start_date,
-      COUNT(dl.timestamp) AS downloads
-    FROM
-      date_series ds
-      LEFT JOIN \`bigquery-public-data.pypi.file_downloads\` dl
-      ON date(dl.timestamp) >= ds.period_start
-      AND date(dl.timestamp) < DATE_ADD(ds.period_start, INTERVAL 7 DAY)
-    where dl.project = @package
-    GROUP BY
-      ds.period_start
-    ORDER BY ds.period_start;
+    const query = `SELECT
+    date_trunc(date(timestamp), week) as week_start_date,
+    COUNT(*) AS downloads
+  FROM
+    \`bigquery-public-data.pypi.file_downloads\`
+  WHERE project = @package
+    AND
+      date(timestamp) between
+      date_sub(date_trunc(current_date(), week), interval 364 day)
+      and date_sub(date_trunc(current_date(), week), interval 1 day)
+  GROUP BY
+    week_start_date
+  ORDER BY week_start_date;
     `
     try {
       const [rows] = await client.query({
