@@ -15,14 +15,9 @@ import { getIcon } from '~/lib/utils'
 interface IMetadataProps {
   pkg: SerializeFrom<Package>
   version?: string
-  stats: {
-    rows?: { week_start_date: string, downloads: number }[]
-    error?: Error
-    loading: boolean
-  }
 }
 
-export default function Metadata({ pkg, version, stats }: IMetadataProps) {
+export default function Metadata({ pkg, version }: IMetadataProps) {
   return (
     <Card>
       <CardHeader>
@@ -52,22 +47,9 @@ export default function Metadata({ pkg, version, stats }: IMetadataProps) {
         <div className="flex flex-col gap-2 divide-y">
           <Command name={pkg.normalized_name} version={version} />
           <div>
-            <h3 className="text-lg font-thin my-2">Weekly Downloads</h3>
-            {stats.loading
-              ? (
-                <Skeleton className="h-32 flex justify-center items-center">
-                  <SvgIcon name="spinner" />
-                </Skeleton>
-                )
-              : stats.error
-                ? (
-                  <pre className="py-8 text-center text-sm text-muted-foreground text-balance">
-                    {stats.error.message}
-                  </pre>
-                  )
-                : (
-                  <DownloadChart data={stats.rows ?? []} />
-                  )}
+            <h3 className="text-lg font-thin my-2">Package Downloads</h3>
+            <img src={`https://pepy.tech/badge/${pkg.normalized_name}/week`} alt="Weekly Downloads" className="my-2" />
+            <img src={`https://pepy.tech/badge/${pkg.normalized_name}/month`} alt="Monthly Downloads" className="my-2" />
           </div>
           <div>
             <h3 className="text-lg font-thin my-2">Authors</h3>

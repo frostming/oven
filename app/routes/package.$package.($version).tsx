@@ -1,7 +1,7 @@
 import type { LoaderFunctionArgs, MetaFunction } from '@remix-run/node'
 import { json, redirect } from '@remix-run/node'
 import type { ShouldRevalidateFunctionArgs } from '@remix-run/react'
-import { Link, useFetcher, useLoaderData, useNavigate, useNavigation } from '@remix-run/react'
+import { Link, useLoaderData, useNavigation, useSearchParams } from '@remix-run/react'
 import invariant from 'tiny-invariant'
 import { explain, rcompare } from '@renovatebot/pep440'
 import dayjs from 'dayjs'
@@ -61,25 +61,8 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
 export default function Package() {
   const { package: pkg, activeTab, version } = useLoaderData<typeof loader>()
   const navigation = useNavigation()
-  const navigate = useNavigate()
   const loading = navigation.state === 'loading'
-
-  const downloadFetcher = useFetcher<PackageDownloadStatsLoader>({ key: `downloadStats:${pkg.normalized_name}` })
-
-  useEffect(() => {
-    downloadFetcher.submit(
-      { package: pkg.normalized_name },
-      { action: `/api/downloads/${pkg.normalized_name}` },
-    )
-  }, [pkg.normalized_name])
-
-  const stats = useMemo(() => {
-    return {
-      rows: downloadFetcher.data?.rows,
-      error: downloadFetcher.data?.error,
-      loading: downloadFetcher.state === 'loading',
-    }
-  }, [downloadFetcher.data, downloadFetcher.state])
+  const [,setSearchParams] = useSearchParams()
 
   return (
     <main className="lg:flex items-stretch gap-2 mb-8">
@@ -92,10 +75,10 @@ export default function Package() {
               <Skeleton className="h-4" />
             </div>
             )
-          : <Metadata pkg={pkg} version={version} stats={stats} />}
+          : <Metadata pkg={pkg} version={version} />}
       </div>
       <div className="flex-grow lg:p-4 min-w-0">
-        <Tabs defaultValue={activeTab || 'description'} onValueChange={value => navigate({ search: `tab=${value}` }, { replace: true })}>
+        <Tabs defaultValue={activeTab || 'description'} onValueChange={value => setSearchParams({ tab: value }, { preventScrollReset: true })}>
           <TabsList className="w-full flex">
             <TabsTrigger value="description" className="flex-grow">
               <SvgIcon name="readme" className="w-4 h-4 mr-1" />
