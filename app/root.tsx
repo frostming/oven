@@ -55,7 +55,7 @@ export function App() {
         <Outlet />
         <Footer />
         <ScrollRestoration />
-        <script async src="https://umami.fming.dev/script.js" data-website-id="f79f811b-6ac7-43db-a732-20977797685b"></script>
+        <script async src="https://umami.fming.dev/script.js" data-website-id="03cf647d-256a-40d6-a950-4fb12664a060"></script>
         <Scripts />
       </body>
     </html>
