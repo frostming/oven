@@ -12,7 +12,7 @@ interface ICommandProps {
   className?: string
 }
 
-type PackageManager = 'pip' | 'pdm' | 'rye' | 'poetry'
+type PackageManager = 'pip' | 'pdm' | 'uv' | 'poetry'
 
 export default function Command({ name, version, className }: ICommandProps) {
   const [isCopied, setIsCopied] = useState(false)
@@ -25,8 +25,8 @@ export default function Command({ name, version, className }: ICommandProps) {
         return `pip install ${nameVersion}`
       case 'pdm':
         return `pdm add ${nameVersion}`
-      case 'rye':
-        return `rye add ${nameVersion}`
+      case 'uv':
+        return `uv add ${nameVersion}`
       case 'poetry':
         return `poetry add ${nameVersion}`
     }
@@ -43,7 +43,7 @@ export default function Command({ name, version, className }: ICommandProps) {
   return (
     <Tabs defaultValue={packageManager} onValueChange={value => setPackageManager(value as PackageManager)} className={cn('rounded bg-muted', className)}>
       <TabsList className="inline-flex h-9 items-center text-muted-foreground w-full justify-start rounded-none border-b bg-transparent p-0">
-        {['pip', 'pdm', 'rye', 'poetry'].map(manager => (
+        {['pip', 'pdm', 'uv', 'poetry'].map(manager => (
           <TabsTrigger
             value={manager}
             key={manager}
@@ -53,7 +53,7 @@ export default function Command({ name, version, className }: ICommandProps) {
           </TabsTrigger>
         ))}
       </TabsList>
-      {['pip', 'pdm', 'rye', 'poetry'].map(manager => (
+      {['pip', 'pdm', 'uv', 'poetry'].map(manager => (
         <TabsContent key={manager} value={manager} className={cn('relative', styles.command)}>
           <Button className={cn('absolute top-2 right-1 py-1 px-2', styles.copyBtn)} onClick={copyText} variant="outline">
             <SvgIcon name={isCopied ? 'check' : 'copy'} className="w-4 h-4" />

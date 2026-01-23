@@ -66,7 +66,7 @@ export default function Package() {
 
   return (
     <main className="lg:flex items-stretch gap-2 mb-8">
-      <div className="lg:w-[400px] flex-shrink-0 p-4">
+      <div className="lg:w-[500px] flex-shrink-0 p-4">
         {loading
           ? (
             <div className="flex flex-col space-y-4">
