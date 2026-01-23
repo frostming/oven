@@ -1,6 +1,6 @@
 import { Link, useFetcher } from '@remix-run/react'
 import type { SerializeFrom } from '@remix-run/node'
-import { useEffect } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card'
 import Command from './Command'
 import { Badge } from './ui/badge'
@@ -9,6 +9,7 @@ import ExternalLink from './ExternalLink'
 import SvgIcon from './SvgIcon'
 import DownloadChart from './DownloadChart'
 import { Skeleton } from './ui/skeleton'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select'
 import type { Package } from '~/lib/pypi.server'
 import { getIcon } from '~/lib/utils'
 
@@ -18,6 +19,28 @@ interface IMetadataProps {
 }
 
 export default function Metadata({ pkg, version }: IMetadataProps) {
+  const dependencies = pkg.dependencies ?? []
+  const { groupedDependencies, orderedGroups } = useMemo(() => {
+    const grouped = dependencies.reduce<Record<string, typeof dependencies>>((acc, dep) => {
+      const extras = dep.extras.length > 0 ? dep.extras : ['default']
+      for (const extra of extras) {
+        if (!acc[extra])
+          acc[extra] = []
+        acc[extra].push(dep)
+      }
+      return acc
+    }, {})
+    const groups = Object.keys(grouped)
+    const ordered = groups.includes('default')
+      ? ['default', ...groups.filter(group => group !== 'default').sort()]
+      : groups.sort()
+    return { groupedDependencies: grouped, orderedGroups: ordered }
+  }, [dependencies])
+  const [activeGroup, setActiveGroup] = useState<string>(orderedGroups[0])
+  useEffect(() => {
+    setActiveGroup(orderedGroups[0])
+  }, [orderedGroups])
+
   return (
     <Card>
       <CardHeader>
@@ -90,16 +113,31 @@ export default function Metadata({ pkg, version }: IMetadataProps) {
           </div>
           <div>
             <h3 className="text-lg font-thin my-2">Dependencies</h3>
-            <ul>
-              {pkg.dependencies.map((dep, index) => (
-                <li key={index}>
-                  <Link to={`/package/${dep.name.toLowerCase()}`} className="hover:underline">
-                    <span className="font-semibold text-primary">{dep.name}</span>
-                    {dep.extra ? <code className="text-sm px-1 border-r-2 text-secondary-foreground bg-secondary">{dep.extra}</code> : null }
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            {dependencies.length === 0
+              ? <p className="text-sm text-muted-foreground">No dependencies</p>
+              : (
+                <>
+                  <Select value={activeGroup} onValueChange={value => setActiveGroup(value)}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select an extra group" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {orderedGroups.map(group => (
+                        <SelectItem key={group} value={group}>{group}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <ul className="mt-2">
+                    {groupedDependencies[activeGroup]?.map((dep, index) => (
+                      <li key={`${dep.requirement}-${index}`}>
+                        <Link to={`/package/${dep.name.toLowerCase()}`} className="hover:underline">
+                          <code className="text-sm text-primary">{dep.requirement}</code>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+                )}
           </div>
         </div>
       </CardContent>
