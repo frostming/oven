@@ -1,5 +1,6 @@
 import process from 'node:process'
 import { normalizePackageName } from './utils'
+import { getSupabaseConfig } from './supabase.server'
 
 const PYPI_INDEX_URL = 'https://pypi.org/simple/'
 const BATCH_SIZE = 5000
@@ -33,22 +34,12 @@ export interface PackageIndexSyncResult {
 export class PackageIndexConfigurationError extends Error {}
 export class PackageIndexSyncInProgressError extends Error {}
 
-function getSyncConfig() {
-  const supabaseUrl = process.env.SUPABASE_URL
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+function getPypiUserAgent() {
   const userAgent = process.env.PYPI_USER_AGENT
 
-  if (!supabaseUrl || !serviceRoleKey || !userAgent) {
-    throw new PackageIndexConfigurationError(
-      'SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, and PYPI_USER_AGENT must be configured',
-    )
-  }
-
-  return {
-    supabaseUrl: supabaseUrl.replace(/\/$/, ''),
-    serviceRoleKey,
-    userAgent,
-  }
+  if (!userAgent)
+    throw new PackageIndexConfigurationError('PYPI_USER_AGENT must be configured')
+  return userAgent
 }
 
 async function fetchWithRetry(url: string, init: RequestInit, label: string) {
@@ -124,15 +115,14 @@ async function fetchProjectIndex(userAgent: string): Promise<SimpleIndexPayload>
   return payload
 }
 
-function createRpcClient(supabaseUrl: string, serviceRoleKey: string) {
+function createRpcClient(supabaseUrl: string, secretKey: string) {
   return async function callRpc(name: string, body: object) {
     const response = await fetchWithRetry(
       `${supabaseUrl}/rest/v1/rpc/${name}`,
       {
         method: 'POST',
         headers: {
-          'apikey': serviceRoleKey,
-          'Authorization': `Bearer ${serviceRoleKey}`,
+          'apikey': secretKey,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(body),
@@ -147,8 +137,9 @@ function createRpcClient(supabaseUrl: string, serviceRoleKey: string) {
 }
 
 export async function syncPackageIndex(): Promise<PackageIndexSyncResult> {
-  const { supabaseUrl, serviceRoleKey, userAgent } = getSyncConfig()
-  const callRpc = createRpcClient(supabaseUrl, serviceRoleKey)
+  const { url, secretKey } = getSupabaseConfig('secret')
+  const userAgent = getPypiUserAgent()
+  const callRpc = createRpcClient(url, secretKey)
 
   let syncId: string
   try {

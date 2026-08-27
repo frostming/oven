@@ -7,6 +7,7 @@ import {
   PackageIndexSyncInProgressError,
   syncPackageIndex,
 } from '~/lib/pypi-index.server'
+import { SupabaseConfigurationError } from '~/lib/supabase.server'
 
 function jsonResponse(body: object, status = 200) {
   return json(body, {
@@ -43,7 +44,7 @@ export async function action({ request }: ActionFunctionArgs) {
     return jsonResponse(await syncPackageIndex())
   }
   catch (error) {
-    if (error instanceof PackageIndexConfigurationError)
+    if (error instanceof PackageIndexConfigurationError || error instanceof SupabaseConfigurationError)
       return jsonResponse({ error: 'Package sync API is not configured' }, 503)
     if (error instanceof PackageIndexSyncInProgressError)
       return jsonResponse({ error: 'A package sync is already running' }, 409)

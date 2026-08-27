@@ -1,5 +1,6 @@
 import process from 'node:process'
 import { normalizePackageName } from './utils'
+import { getSupabaseConfig } from './supabase.server'
 
 export interface SearchResult {
   name: string
@@ -24,26 +25,11 @@ interface MetadataUpdate {
   last_serial: number
 }
 
-function getSupabaseConfig() {
-  const url = process.env.SUPABASE_URL
-  const key = process.env.SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_ANON_KEY
-
-  if (!url || !key)
-    throw new Error('SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY must be configured')
-
-  return {
-    url: url.replace(/\/$/, ''),
-    key,
-    serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
-  }
-}
-
 async function callRpc(url: string, key: string, name: string, body: object) {
   const response = await fetch(`${url}/rest/v1/rpc/${name}`, {
     method: 'POST',
     headers: {
       'apikey': key,
-      'Authorization': `Bearer ${key}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(body),
@@ -108,18 +94,18 @@ export async function searchPackages(rawQuery: string): Promise<SearchResult[]> 
   if (!query)
     return []
 
-  const { url, key, serviceRoleKey } = getSupabaseConfig()
+  const { url, publishableKey, secretKey } = getSupabaseConfig('public')
   const configuredLimit = Number.parseInt(process.env.MAX_SEARCH_RESULTS || '', 10)
   const resultLimit = Number.isFinite(configuredLimit) ? configuredLimit : DEFAULT_SEARCH_LIMIT
-  const rows = await callRpc(url, key, 'search_packages', {
+  const rows = await callRpc(url, publishableKey, 'search_packages', {
     query_text: query,
     result_limit: resultLimit,
   }) as SearchRow[]
   const updates = await hydrateRows(rows)
 
-  if (updates.length > 0 && serviceRoleKey) {
+  if (updates.length > 0 && secretKey) {
     try {
-      await callRpc(url, serviceRoleKey, 'update_package_metadata_batch', {
+      await callRpc(url, secretKey, 'update_package_metadata_batch', {
         metadata_batch: updates,
       })
     }

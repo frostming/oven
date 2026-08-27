@@ -12,14 +12,14 @@ Create a Supabase project, apply
 ```sh
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_PUBLISHABLE_KEY=your-publishable-key
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+SUPABASE_SECRET_KEY=sb_secret_your-secret-key
 PYPI_USER_AGENT='oven/1.0 admin@example.com'
 PYPI_SYNC_TOKEN=your-random-sync-token
 ```
 
 The application uses the publishable key for the read-only `search_packages`
-RPC. The service role key remains server-only and caches lazily fetched PyPI
-metadata.
+RPC. The secret key remains server-only and is used for package-name sync and
+for caching lazily fetched PyPI metadata.
 
 Trigger the initial package-name synchronization after the application starts:
 
@@ -31,7 +31,7 @@ curl --fail-with-body --max-time 1800 --request POST \
 
 Configure a daily Dokploy scheduled task to send the same HTTP request. The
 scheduler only needs the public application URL and `PYPI_SYNC_TOKEN`; it does
-not need the Supabase service role key.
+not need the Supabase secret key.
 
 A successful request returns:
 
