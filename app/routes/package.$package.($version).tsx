@@ -5,7 +5,7 @@ import { Link, useLoaderData, useNavigation, useSearchParams } from '@remix-run/
 import invariant from 'tiny-invariant'
 import { explain, rcompare } from '@renovatebot/pep440'
 import dayjs from 'dayjs'
-import { useEffect, useMemo } from 'react'
+import { useCallback } from 'react'
 import type { PackageDownloadStatsLoader } from './api.downloads.$package'
 import { Card } from '~/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs'
@@ -33,7 +33,9 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
     url.pathname = `/package/${normalizedName}/${params.version ? `${params.version}` : ''}`
     return redirect(`${url.pathname}${url.search}`, { status: 302 })
   }
-  const activeTab = url.searchParams.get('tab')
+  // A deep link into the file explorer implies the Files tab.
+  const hasFileSelection = url.searchParams.has('artifact') || url.searchParams.has('file')
+  const activeTab = url.searchParams.get('tab') || (hasFileSelection ? 'files' : 'description')
   const pkg = await pypi.getPackage(normalizedName, params.version)
   if (!pkg)
     throw new Response('Package not found', { status: 404 })
@@ -64,6 +66,15 @@ export default function Package() {
   const loading = navigation.state === 'loading'
   const [,setSearchParams] = useSearchParams()
 
+  // Keep the other params(`artifact`, `file`) so that switching back to the
+  // Files tab restores the previously browsed file.
+  const onTabChange = useCallback((value: string) => {
+    setSearchParams((prev) => {
+      prev.set('tab', value)
+      return prev
+    }, { preventScrollReset: true })
+  }, [setSearchParams])
+
   return (
     <main className="lg:flex items-stretch gap-2 mb-8">
       <div className="lg:w-[500px] flex-shrink-0 p-4">
@@ -77,8 +88,8 @@ export default function Package() {
             )
           : <Metadata pkg={pkg} version={version} />}
       </div>
-      <div className="flex-grow lg:p-4 min-w-0">
-        <Tabs defaultValue={activeTab || 'description'} onValueChange={value => setSearchParams({ tab: value }, { preventScrollReset: true })}>
+      <div className="flex-grow lg:p-4 min-w-0 flex flex-col">
+        <Tabs defaultValue={activeTab} onValueChange={onTabChange} className="flex flex-col flex-grow">
           <TabsList className="w-full flex">
             <TabsTrigger value="description" className="flex-grow">
               <SvgIcon name="readme" className="w-4 h-4 mr-1" />
@@ -93,8 +104,8 @@ export default function Package() {
               Files
             </TabsTrigger>
           </TabsList>
-          <TabsContent value="description">
-            <Card className="p-2">
+          <TabsContent value="description" className="flex-grow">
+            <Card className="p-2 h-full">
               {loading
                 ? <Skeleton className="h-96" />
                 : (
@@ -102,11 +113,11 @@ export default function Package() {
                   )}
             </Card>
           </TabsContent>
-          <TabsContent value="versions">
+          <TabsContent value="versions" className="flex-grow">
             {loading
               ? <Skeleton className="h-96" />
               : (
-                <Card className="p-2">
+                <Card className="p-2 h-full">
                   <div>
                     {Object.entries(pkg.releases).filter(([a]) => explain(a) !== null).sort((a, b) => rcompare(a[0], b[0])).map(([version, files]) => (
                       <div key={version} className="p-4 border-b border-gray-200">
@@ -126,21 +137,14 @@ export default function Package() {
                               )
                             : null}
                         </h3>
-                        <ul className="mt-2">
-                          {files.map(file => (
-                            <li key={file.filename}>
-                              <code>{file.filename}</code>
-                            </li>
-                          ))}
-                        </ul>
                       </div>
                     ))}
                   </div>
                 </Card>
                 )}
           </TabsContent>
-          <TabsContent value="files">
-            <Card className="p-2">{loading ? <Skeleton className="h-96" /> : <FileTree pkg={pkg} />}</Card>
+          <TabsContent value="files" className="flex-grow">
+            <Card className="p-2 h-full">{loading ? <Skeleton className="h-96" /> : <FileTree pkg={pkg} />}</Card>
           </TabsContent>
         </Tabs>
       </div>

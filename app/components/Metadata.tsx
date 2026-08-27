@@ -9,7 +9,7 @@ import ExternalLink from './ExternalLink'
 import SvgIcon from './SvgIcon'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select'
 import type { Package } from '~/lib/pypi.server'
-import { getIcon } from '~/lib/utils'
+import { getIcon, normalizePackageName } from '~/lib/utils'
 
 interface IMetadataProps {
   pkg: SerializeFrom<Package>
@@ -128,9 +128,13 @@ export default function Metadata({ pkg, version }: IMetadataProps) {
                   <ul className="mt-2">
                     {groupedDependencies[activeGroup]?.map((dep, index) => (
                       <li key={`${dep.requirement}-${index}`}>
-                        <Link to={`/package/${dep.name.toLowerCase()}`} className="hover:underline">
-                          <code className="text-sm text-primary">{dep.requirement}</code>
-                        </Link>
+                        <code className="text-sm">
+                          {/* Only the name is a link, the specifier and marker stay plain text */}
+                          <Link to={`/package/${normalizePackageName(dep.name)}`} className="text-primary hover:underline">
+                            {dep.name}
+                          </Link>
+                          <span className="text-muted-foreground">{dep.requirement.slice(dep.name.length)}</span>
+                        </code>
                       </li>
                     ))}
                   </ul>
