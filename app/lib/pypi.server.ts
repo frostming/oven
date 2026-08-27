@@ -4,9 +4,7 @@ import process from 'node:process'
 import fs from 'node:fs/promises'
 import { Buffer } from 'node:buffer'
 import addrparser from 'address-rfc2822'
-import { JSDOM } from 'jsdom'
 import { normalizePackageName } from './utils'
-import { BigQueryClient } from './bigquery.server'
 
 interface Author {
   name?: string
@@ -25,13 +23,10 @@ interface FileResponse {
   yanked: boolean
 }
 
-export interface SearchResult {
+export interface Package {
   name: string
   version: string
   summary: string
-}
-
-export interface Package extends SearchResult {
   normalized_name: string
   published_time?: Date
   project_urls: Record<string, string>
@@ -126,21 +121,21 @@ function tokenizeMarker(input: string): MarkerToken[] {
     if (wordMatch) {
       const word = wordMatch[0]
       const lower = word.toLowerCase()
-      if (lower === 'and') {
+      if (lower === 'and')
         tokens.push({ type: 'and' })
-      }
-      else if (lower === 'or') {
+
+      else if (lower === 'or')
         tokens.push({ type: 'or' })
-      }
-      else if (lower === 'not') {
+
+      else if (lower === 'not')
         tokens.push({ type: 'not' })
-      }
-      else if (lower === 'in') {
+
+      else if (lower === 'in')
         tokens.push({ type: 'op', value: 'in' })
-      }
-      else {
+
+      else
         tokens.push({ type: 'ident', value: word })
-      }
+
       index += word.length
       continue
     }
@@ -187,7 +182,7 @@ class MarkerParser {
   }
 
   private parseComparison(): MarkerNode | null {
-    let left = this.parsePrimary()
+    const left = this.parsePrimary()
     if (!left)
       return null
     const op = this.parseOperator()
@@ -311,9 +306,11 @@ function parseMarker(marker: string): { extras: string[], markerWithoutExtra?: s
   if (!expr) {
     const extras = new Set<string>()
     const extraRegex = /extra\s*==\s*(['"])([^'"]+)\1/gi
-    let match: RegExpExecArray | null
-    while ((match = extraRegex.exec(marker)) !== null)
+    let match = extraRegex.exec(marker)
+    while (match !== null) {
       extras.add(match[2])
+      match = extraRegex.exec(marker)
+    }
     let stripped = marker.replace(extraRegex, '').replace(/\s+/g, ' ').trim()
     stripped = stripped.replace(/^(and|or)\s+/i, '').replace(/\s+(and|or)$/i, '').trim()
     return { extras: [...extras], markerWithoutExtra: stripped || undefined }
@@ -344,7 +341,6 @@ function parseDependency(dep: string): Dependency | undefined {
 }
 
 class PyPI {
-  static readonly MAX_SEARCH_RESULTS = process.env.MAX_SEARCH_RESULTS ? Number.parseInt(process.env.MAX_SEARCH_RESULTS) : 10
   private url: string
   private cachePath: string
 
@@ -444,26 +440,6 @@ class PyPI {
     const fileData = await fileResponse.arrayBuffer()
     await fs.writeFile(storagePath, Buffer.from(fileData))
     return storagePath
-  }
-
-  async search(query: string): Promise<SearchResult[]> {
-    const url = `${this.url}/search?q=${encodeURIComponent(query)}`
-    const response = await fetch(url)
-
-    if (!response.ok)
-      throw new Error(`Failed to fetch search results: ${response.statusText}`)
-    // parse the HTML response
-    const text = await response.text()
-    const dom = new JSDOM(text)
-    const results = [...dom.window.document.querySelectorAll('.package-snippet')].map((element: Element) => {
-      const name = element.querySelector('.package-snippet__name')?.textContent || ''
-      const version = element.querySelector('.package-snippet__version')?.textContent || ''
-      const summary = element.querySelector('.package-snippet__description')?.textContent || ''
-      if (!name || !version || !summary)
-        return null
-      return { name, version, summary }
-    }).filter((result): result is SearchResult => result !== null).slice(0, PyPI.MAX_SEARCH_RESULTS)
-    return results
   }
 }
 
