@@ -2,7 +2,7 @@ import { Link } from '@remix-run/react'
 import { useEffect, useRef, useState } from 'react'
 import SvgIcon from './SvgIcon'
 import { Skeleton } from './ui/skeleton'
-import type { SearchResult } from '~/lib/pypi.server'
+import type { SearchResult } from '~/lib/pypi-search.server'
 
 interface IPackageListProps {
   loading?: boolean
@@ -73,9 +73,11 @@ export default function PackageList({ loading, packages, className, onSelectChan
               >
                 <div className="flex items-center justify-between">
                   <h3 className="font-semibold">{pkg.name}</h3>
-                  <span className="text-sm text-muted-foreground">{pkg.version}</span>
+                  {pkg.latest_version
+                    ? <span className="text-sm text-muted-foreground">{pkg.latest_version}</span>
+                    : null}
                 </div>
-                <p className="text-sm">{pkg.summary}</p>
+                {pkg.description ? <p className="text-sm">{pkg.description}</p> : null}
               </Link>
             ))}
           </div>
