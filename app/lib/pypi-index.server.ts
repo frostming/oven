@@ -25,7 +25,7 @@ interface PackageRow {
   sync_id: string
 }
 
-export interface PackageIndexSyncResult {
+interface PackageIndexSyncResult {
   package_count: number
   batch_count: number
   source_serial: number
@@ -136,7 +136,52 @@ function createRpcClient(supabaseUrl: string, secretKey: string) {
   }
 }
 
-export async function syncPackageIndex(): Promise<PackageIndexSyncResult> {
+export interface PackageIndexSyncStatus {
+  status: 'idle' | 'running' | 'completed' | 'failed'
+  sync_id: string | null
+  started_at: string | null
+  completed_at: string | null
+  failed_at: string | null
+  error: string | null
+  source_serial: number | null
+  package_count: number
+}
+
+type RpcClient = ReturnType<typeof createRpcClient>
+
+async function runPackageIndexSync(
+  callRpc: RpcClient,
+  syncId: string,
+  userAgent: string,
+): Promise<PackageIndexSyncResult> {
+  const payload = await fetchProjectIndex(userAgent)
+  const projects = uniqueProjects(payload.projects, syncId)
+  const batchCount = Math.ceil(projects.length / BATCH_SIZE)
+
+  for (let offset = 0; offset < projects.length; offset += BATCH_SIZE) {
+    await callRpc('upsert_package_batch', {
+      package_batch: projects.slice(offset, offset + BATCH_SIZE),
+    })
+  }
+
+  const packageCount = await callRpc('finish_package_sync', {
+    requested_sync_id: syncId,
+    requested_source_serial: payload.meta['_last-serial'],
+    expected_package_count: projects.length,
+  }) as number
+
+  return {
+    package_count: packageCount,
+    batch_count: batchCount,
+    source_serial: payload.meta['_last-serial'],
+  }
+}
+
+/**
+ * Acquire the sync lease and run the synchronization in the background.
+ * Resolves with the sync ID as soon as the lease is held.
+ */
+export async function startPackageIndexSync(): Promise<{ sync_id: string }> {
   const { url, secretKey } = getSupabaseConfig('secret')
   const userAgent = getPypiUserAgent()
   const callRpc = createRpcClient(url, secretKey)
@@ -151,36 +196,26 @@ export async function syncPackageIndex(): Promise<PackageIndexSyncResult> {
     throw error
   }
 
-  try {
-    const payload = await fetchProjectIndex(userAgent)
-    const projects = uniqueProjects(payload.projects, syncId)
-    const batchCount = Math.ceil(projects.length / BATCH_SIZE)
+  runPackageIndexSync(callRpc, syncId, userAgent).catch(
+    async (error) => {
+      console.error('PyPI package index sync failed', error)
+      try {
+        await callRpc('abort_package_sync', {
+          requested_sync_id: syncId,
+          error_message: error instanceof Error ? error.message : String(error),
+        })
+      }
+      catch (abortError) {
+        console.error('Failed to release the package sync lease', abortError)
+      }
+    },
+  )
 
-    for (let offset = 0; offset < projects.length; offset += BATCH_SIZE) {
-      await callRpc('upsert_package_batch', {
-        package_batch: projects.slice(offset, offset + BATCH_SIZE),
-      })
-    }
+  return { sync_id: syncId }
+}
 
-    const packageCount = await callRpc('finish_package_sync', {
-      requested_sync_id: syncId,
-      requested_source_serial: payload.meta['_last-serial'],
-      expected_package_count: projects.length,
-    }) as number
-
-    return {
-      package_count: packageCount,
-      batch_count: batchCount,
-      source_serial: payload.meta['_last-serial'],
-    }
-  }
-  catch (error) {
-    try {
-      await callRpc('abort_package_sync', { requested_sync_id: syncId })
-    }
-    catch (abortError) {
-      console.error('Failed to release the package sync lease', abortError)
-    }
-    throw error
-  }
+export async function getPackageIndexSyncStatus(): Promise<PackageIndexSyncStatus> {
+  const { url, secretKey } = getSupabaseConfig('secret')
+  const callRpc = createRpcClient(url, secretKey)
+  return await callRpc('get_package_sync_status', {}) as PackageIndexSyncStatus
 }
