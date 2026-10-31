@@ -1,12 +1,14 @@
 import type { SerializeFrom } from '@remix-run/node'
 import { useFetcher, useSearchParams } from '@remix-run/react'
 import { ChevronRight, FileIcon, FolderIcon } from 'lucide-react'
-import { useCallback, useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import { Skeleton } from '../ui/skeleton'
 import styles from './file-tree.module.css'
+import { highlight } from './highlight'
 import type { Package } from '~/lib/pypi.server'
 import type { FileTreeNode } from '~/lib/utils.server'
+import type { FileContent } from '~/routes/api.file-content'
 import { cn } from '~/lib/utils'
 
 interface IFileBrowserProps {
@@ -54,7 +56,8 @@ function resolvePath(nodes: FileTreeNode[], path: string): ResolvedPath {
  */
 export default function FileTree({ pkg }: IFileBrowserProps) {
   const listFetcher = useFetcher<{ files: FileTreeNode[] }>()
-  const codeFetcher = useFetcher<{ code: string, errorReason: string }>()
+  const codeFetcher = useFetcher<FileContent>()
+  const [highlighted, setHighlighted] = useState<{ data: FileContent, html: string }>()
   const [searchParams, setSearchParams] = useSearchParams()
 
   const requestedArtifact = searchParams.get('artifact')
@@ -80,6 +83,24 @@ export default function FileTree({ pkg }: IFileBrowserProps) {
       return
     codeFetcher.submit({ name: pkg.name, version: pkg.version, filename: artifact, path }, { action: '/api/file-content' })
   }, [artifact, path, isDirectory])
+
+  // Show the plain text right away and swap in the highlighted HTML once ready.
+  useEffect(() => {
+    const data = codeFetcher.data
+    if (!data || data.errorReason)
+      return
+    let cancelled = false
+    highlight(data.content, data.language).then(
+      (html) => {
+        if (!cancelled)
+          setHighlighted({ data, html })
+      },
+      error => console.error('Failed to highlight the file', error),
+    )
+    return () => {
+      cancelled = true
+    }
+  }, [codeFetcher.data])
 
   const updateParams = useCallback((update: (params: URLSearchParams) => void) => {
     setSearchParams((prev) => {
@@ -146,16 +167,17 @@ export default function FileTree({ pkg }: IFileBrowserProps) {
     </div>
   )
 
-  const content = codeFetcher.state !== 'idle' || !codeFetcher.data
+  const codeData = codeFetcher.data
+  const content = codeFetcher.state !== 'idle' || !codeData
     ? <Skeleton className="flex-grow min-h-64" />
     : (
       <div
         className={cn('rounded-md border border-slate-300 p-2 overflow-auto text-sm max-h-[800px] lg:max-h-none', styles.code)}
-        {...(!codeFetcher.data.errorReason ? { dangerouslySetInnerHTML: { __html: codeFetcher.data.code } } : {})}
+        {...(highlighted?.data === codeData ? { dangerouslySetInnerHTML: { __html: highlighted.html } } : {})}
       >
-        {codeFetcher.data.errorReason
-          ? <pre className="w-full">{codeFetcher.data.errorReason}</pre>
-          : null}
+        {highlighted?.data === codeData
+          ? null
+          : <pre className="w-full">{codeData.errorReason ? codeData.errorReason : <code>{codeData.content}</code>}</pre>}
       </div>
       )
 

@@ -1,11 +1,11 @@
-import fs from 'node:fs/promises'
-import fsSync from 'node:fs'
+import fs from 'node:fs'
 import * as zlib from 'node:zlib'
-import type { Buffer } from 'node:buffer'
-import jszip from 'jszip'
+import { Buffer } from 'node:buffer'
+import type { Readable } from 'node:stream'
+import { pipeline } from 'node:stream'
+import yauzl from 'yauzl'
 import tar from 'tar-stream'
 import bz2 from 'unbzip2-stream'
-import * as bl from 'bl'
 
 export interface FileTreeNode {
   id: string
@@ -19,6 +19,8 @@ const gzExtensions = ['.tar.gz', '.tgz']
 const bzExtensions = ['.tar.bz2', '.tbz']
 const xzExtensions = ['.tar.xz', '.txz', '.tlz', '.tar.lz', '.tar.lzma']
 const tarExtensions = ['.tar', ...gzExtensions, ...bzExtensions, ...xzExtensions]
+
+export class ArchiveFileTooLargeError extends Error {}
 
 export async function listArchiveFiles(filePath: string): Promise<FileTreeNode[]> {
   const originalName = atob(filePath.split('.').pop()!)
@@ -94,86 +96,102 @@ export function guessLanguage(filename: string): string | null {
   }
 }
 
-export async function getArchiveFile(filePath: string, path: string) {
+export async function getArchiveFile(filePath: string, path: string, maxSize: number) {
   const originalName = atob(filePath.split('.').pop()!)
   if (zipExtensions.some(ext => originalName.endsWith(ext)))
-    return getZipFile(filePath, path)
+    return getZipFile(filePath, path, maxSize)
   else if (tarExtensions.some(ext => originalName.endsWith(ext)))
-    return getTarFile(filePath, path)
+    return getTarFile(filePath, path, maxSize)
   else
     throw new Error('Unknown archive type')
 }
 
-async function getZipFile(filePath: string, path: string) {
-  const data = await fs.readFile(filePath)
-  const zip = await jszip.loadAsync(data)
-  const file = zip.file(path)
-  if (!file)
+async function readStream(stream: Readable, maxSize: number): Promise<Buffer> {
+  const chunks: Buffer[] = []
+  let size = 0
+  for await (const chunk of stream) {
+    size += chunk.length
+    if (size > maxSize) {
+      stream.destroy()
+      throw new ArchiveFileTooLargeError('File is too large to display.')
+    }
+    chunks.push(chunk)
+  }
+  return Buffer.concat(chunks)
+}
+
+// Only the central directory and the requested entry are read from disk,
+// so memory usage doesn't grow with the size of the archive.
+async function getZipFile(filePath: string, path: string, maxSize: number) {
+  const zip = await yauzl.openPromise(filePath, { lazyEntries: true, autoClose: false })
+  try {
+    for await (const entry of zip.eachEntry()) {
+      if (entry.fileName !== path)
+        continue
+      if (entry.uncompressedSize > maxSize)
+        throw new ArchiveFileTooLargeError('File is too large to display.')
+      return await readStream(await zip.openReadStreamPromise(entry), maxSize)
+    }
     throw new Error('File not found')
-  return await file.async('nodebuffer')
-}
-
-async function getTarFile(filePath: string, path: string): Promise<Buffer> {
-  return new Promise((resolve, reject) => {
-    const extract = tar.extract()
-
-    extract.on('entry', (header, stream, next) => {
-      if (header.name === path) {
-        stream.pipe(bl.BufferListStream((err, data) => {
-          if (err)
-            reject(err)
-          else
-            resolve(data)
-        }))
-      }
-      else {
-        stream.resume() // Skip to the next entry
-        next()
-      }
-    })
-
-    getFileStream(filePath).pipe(extract).on('error', reject)
-  })
-}
-
-function getFileStream(filePath: string) {
-  const originalName = atob(filePath.split('.').pop()!)
-  const stream = fsSync.createReadStream(filePath)
-  if (gzExtensions.some(ext => originalName.endsWith(ext)))
-    return stream.pipe(zlib.createGunzip())
-  else if (bzExtensions.some(ext => originalName.endsWith(ext)))
-    return stream.pipe(bz2())
-  else if (xzExtensions.some(ext => originalName.endsWith(ext)))
-    throw new Error('xz compressed files are not supported')
-  else
-    return stream
+  }
+  finally {
+    zip.close()
+  }
 }
 
 async function listZipFiles(filePath: string): Promise<string[]> {
-  const data = await fs.readFile(filePath)
-  const zip = await jszip.loadAsync(data)
-  const filenames = Object.keys(zip.files).filter(f => !zip.files[f].dir)
-  return filenames
+  const zip = await yauzl.openPromise(filePath, { lazyEntries: true, autoClose: false })
+  try {
+    const fileNames: string[] = []
+    for await (const entry of zip.eachEntry()) {
+      if (!entry.fileName.endsWith('/'))
+        fileNames.push(entry.fileName)
+    }
+    return fileNames
+  }
+  finally {
+    zip.close()
+  }
+}
+
+function openTarArchive(filePath: string) {
+  const originalName = atob(filePath.split('.').pop()!)
+  if (xzExtensions.some(ext => originalName.endsWith(ext)))
+    throw new Error('xz compressed files are not supported')
+
+  const streams: NodeJS.ReadWriteStream[] = []
+  if (gzExtensions.some(ext => originalName.endsWith(ext)))
+    streams.push(zlib.createGunzip())
+  else if (bzExtensions.some(ext => originalName.endsWith(ext)))
+    streams.push(bz2())
+  const extract = tar.extract()
+  // pipeline() destroys every stream if any of them fails or the consumer
+  // stops iterating early, so file handles and buffers are always released.
+  pipeline([fs.createReadStream(filePath), ...streams, extract], () => {})
+  return extract
+}
+
+async function getTarFile(filePath: string, path: string, maxSize: number): Promise<Buffer> {
+  for await (const entry of openTarArchive(filePath)) {
+    if (entry.header.name !== path) {
+      entry.resume()
+      continue
+    }
+    if ((entry.header.size ?? 0) > maxSize)
+      throw new ArchiveFileTooLargeError('File is too large to display.')
+    return await readStream(entry, maxSize)
+  }
+  throw new Error('File not found')
 }
 
 async function listTarFiles(filePath: string): Promise<string[]> {
-  return new Promise((resolve, reject) => {
-    const fileNames: string[] = []
-    const extract = tar.extract()
-
-    extract.on('entry', (header, stream, next) => {
-      if (!header.name.endsWith('/'))
-        fileNames.push(header.name)
-      stream.resume() // Consume the stream
-      next()
-    })
-
-    extract.on('finish', () => resolve(fileNames))
-
-    getFileStream(filePath)
-      .pipe(extract)
-      .on('error', reject)
-  })
+  const fileNames: string[] = []
+  for await (const entry of openTarArchive(filePath)) {
+    if (!entry.header.name.endsWith('/'))
+      fileNames.push(entry.header.name)
+    entry.resume()
+  }
+  return fileNames
 }
 
 export function buildFileTree(files: string[]): FileTreeNode[] {

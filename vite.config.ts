@@ -8,4 +8,8 @@ installGlobals()
 
 export default defineConfig({
   plugins: [remix(), tsconfigPaths(), svgr()],
+  worker: {
+    // The highlight worker lazy-loads Shiki languages, which needs code splitting.
+    format: 'es',
+  },
 })
