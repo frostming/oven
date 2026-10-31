@@ -2,12 +2,19 @@ import type { LoaderFunctionArgs } from '@remix-run/node'
 import { json } from '@remix-run/node'
 import invariant from 'tiny-invariant'
 import { isBinaryFile } from 'isbinaryfile'
-import { getHighlighter } from 'shiki'
 import pypi from '~/lib/pypi.server'
-import { getArchiveFile, guessLanguage } from '~/lib/utils.server'
+import { ArchiveFileTooLargeError, getArchiveFile, guessLanguage } from '~/lib/utils.server'
 
 const maxReadSize = 2 ** 20 // 1MB
 
+export interface FileContent {
+  content: string
+  language: string
+  errorReason: string
+}
+
+// Syntax highlighting is done in the browser, as rendering the HTML for a large
+// file takes hundreds of MB that the server process never gives back.
 export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url)
   const name = url.searchParams.get('name')
@@ -20,31 +27,19 @@ export async function loader({ request }: LoaderFunctionArgs) {
   invariant(path, 'No path provided')
 
   const language = guessLanguage(path) || 'plaintext'
-
-  const highlighter = await getHighlighter({
-    themes: ['github-light', 'github-dark'],
-    langs: [language],
-  })
-
   const storageFile = await pypi.getPackageFile(name, version, filename)
-  const buffer = await getArchiveFile(storageFile, path)
-  let errorReason = ''
-  let code = ''
-  if (buffer.length > maxReadSize) {
-    errorReason = 'File is too large to display.'
+  let buffer
+  try {
+    buffer = await getArchiveFile(storageFile, path, maxReadSize)
   }
-  else if (await isBinaryFile(buffer)) {
-    errorReason = 'It looks like a binary file.'
-  }
-  else {
-    code = highlighter.codeToHtml(buffer.toString('utf8'), {
-      lang: language,
-      themes: {
-        light: 'github-light',
-        dark: 'github-dark',
-      },
-    })
+  catch (error) {
+    if (error instanceof ArchiveFileTooLargeError)
+      return json<FileContent>({ content: '', language, errorReason: 'File is too large to display.' })
+    throw error
   }
 
-  return json({ code, errorReason })
+  if (await isBinaryFile(buffer))
+    return json<FileContent>({ content: '', language, errorReason: 'It looks like a binary file.' })
+
+  return json<FileContent>({ content: buffer.toString('utf8'), language, errorReason: '' })
 }

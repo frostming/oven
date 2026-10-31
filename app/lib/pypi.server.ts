@@ -2,7 +2,9 @@ import path from 'node:path'
 import os from 'node:os'
 import process from 'node:process'
 import fs from 'node:fs/promises'
-import { Buffer } from 'node:buffer'
+import { createWriteStream } from 'node:fs'
+import { randomUUID } from 'node:crypto'
+import { pipeline } from 'node:stream/promises'
 import addrparser from 'address-rfc2822'
 import { normalizePackageName } from './utils'
 
@@ -340,9 +342,32 @@ function parseDependency(dep: string): Dependency | undefined {
   return { name, requirement, extras }
 }
 
+// Works with both Node's native fetch and the fetch polyfill installed by
+// remix-serve, whose body isn't accepted by `Readable.fromWeb()`.
+async function* iterateBody(body: ReadableStream<Uint8Array>) {
+  const reader = body.getReader()
+  let finished = false
+  try {
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) {
+        finished = true
+        return
+      }
+      yield value
+    }
+  }
+  finally {
+    // Release the connection if writing to disk failed midway.
+    if (!finished)
+      await reader.cancel().catch(() => {})
+  }
+}
+
 class PyPI {
   private url: string
   private cachePath: string
+  private downloads = new Map<string, Promise<string>>()
 
   constructor(url: string) {
     this.url = url
@@ -425,6 +450,17 @@ class PyPI {
       // ignore
     }
 
+    // Share one download between concurrent requests for the same file.
+    let download = this.downloads.get(storagePath)
+    if (!download) {
+      download = this.downloadPackageFile(name, version, filename, storagePath)
+        .finally(() => this.downloads.delete(storagePath))
+      this.downloads.set(storagePath, download)
+    }
+    return download
+  }
+
+  private async downloadPackageFile(name: string, version: string, filename: string, storagePath: string): Promise<string> {
     const response = await fetch(`${this.url}/pypi/${normalizePackageName(name)}/${version}/json`)
     if (!response.ok)
       throw new Error(`Failed to fetch package file: ${response.statusText}`)
@@ -433,12 +469,21 @@ class PyPI {
     const fileUrl = data.urls.find((file: FileResponse) => file.filename === filename)?.url
     if (!fileUrl)
       throw new Response('File not found', { status: 404 })
-    // fetch and save the file
     const fileResponse = await fetch(fileUrl)
-    if (!fileResponse.ok)
+    if (!fileResponse.ok || !fileResponse.body)
       throw new Error(`Failed to fetch package file: ${fileResponse.statusText}`)
-    const fileData = await fileResponse.arrayBuffer()
-    await fs.writeFile(storagePath, Buffer.from(fileData))
+
+    // Stream to a temporary file so that large wheels are never buffered in
+    // memory and a failed download doesn't leave a truncated file in the cache.
+    const tempPath = `${storagePath}.${randomUUID()}.tmp`
+    try {
+      await pipeline(iterateBody(fileResponse.body), createWriteStream(tempPath))
+      await fs.rename(tempPath, storagePath)
+    }
+    catch (error) {
+      await fs.rm(tempPath, { force: true })
+      throw error
+    }
     return storagePath
   }
 }
