@@ -1,0 +1,38 @@
+diff --git a/dist/index.edge.js b/dist/index.edge.js
+index 089354ce4b62dde0fed3482e028ffade3d34b750..a70417c94778f2a51235d310b704144880837192 100644
+--- a/dist/index.edge.js
++++ b/dist/index.edge.js
+@@ -18784,7 +18784,13 @@ async function render(satori, resvg, opts, defaultFonts, element) {
+       value: options.width
+     }
+   });
+-  return resvgJS.render().asPng();
++  // Free the WASM-side objects explicitly; otherwise every render leaks
++  // its pixmap inside resvg's linear memory, which never shrinks.
++  const pngData = resvgJS.render();
++  const pngBuffer = pngData.asPng();
++  pngData.free();
++  resvgJS.free();
++  return pngBuffer;
+ }
+ 
+ // src/figma/index.tsx
+diff --git a/dist/index.node.js b/dist/index.node.js
+index c92983c67cbcc73d197d1ccd2a6f22345a2f7590..f20880d1463ea20f3cb5f5909c26f3ce4a8eaea8 100644
+--- a/dist/index.node.js
++++ b/dist/index.node.js
+@@ -18786,7 +18786,13 @@ async function render(satori2, resvg, opts, defaultFonts, element) {
+       value: options.width
+     }
+   });
+-  return resvgJS.render().asPng();
++  // Free the WASM-side objects explicitly; otherwise every render leaks
++  // its pixmap inside resvg's linear memory, which never shrinks.
++  const pngData = resvgJS.render();
++  const pngBuffer = pngData.asPng();
++  pngData.free();
++  resvgJS.free();
++  return pngBuffer;
+ }
+ 
+ // src/figma/index.tsx

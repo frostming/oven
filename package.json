@@ -72,5 +72,10 @@
     "typescript": "^5.4.5",
     "vite": "^5.2.10",
     "vite-tsconfig-paths": "^4.3.2"
+  },
+  "pnpm": {
+    "patchedDependencies": {
+      "@vercel/og@0.6.2": "patches/@vercel__og@0.6.2.patch"
+    }
   }
 }
